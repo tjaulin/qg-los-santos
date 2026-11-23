@@ -15,11 +15,11 @@ const CATS = [
 /* Améliorations-types des business de MC (prix ≈, identiques quel que soit l’emplacement) */
 function mcUps(id, label, equip, staff, sec){
   return [
-    {id:id+'_equip', cat:'passif', parent:id, kind:'up', name:'Équipement ('+label+')', price:equip, approx:true,
+    {id:id+'_equip', cat:'passif', parent:id, kind:'up', name:'Équipement ('+label+')', price:equip,
      what:'Production plus rapide et marchandise plus chère. La plus rentable des trois.'},
-    {id:id+'_staff', cat:'passif', parent:id, kind:'up', name:'Personnel ('+label+')', price:staff, approx:true,
+    {id:id+'_staff', cat:'passif', parent:id, kind:'up', name:'Personnel ('+label+')', price:staff,
      what:'Production encore plus rapide et marchandise plus chère, en complément de l’équipement.'},
-    {id:id+'_sec', cat:'passif', parent:id, kind:'up', name:'Sécurité ('+label+')', price:sec, approx:true,
+    {id:id+'_sec', cat:'passif', parent:id, kind:'up', name:'Sécurité ('+label+')', price:sec,
      what:'Réduit le risque de raid. Ne rapporte rien : à prendre en dernier, si tu as de l’argent qui dort.'}
   ];
 }
@@ -70,7 +70,7 @@ const PROPS = [
        'Les contrats sont courts : parfaits pour remplir la recharge de Cayo.'],
      avis:'Bon complément solo une fois les gros braquages débloqués.'}},
 
-  {id:'salvage', cat:'braquage', name:'Casse (Salvage Yard)', price:1450000, from:true, approx:true,
+  {id:'salvage', cat:'braquage', name:'Casse (Salvage Yard)', price:1620000, from:true,
    what:'3 braquages de véhicules par semaine, remorquage et un coffre.',
    fiche:{
      quoi:'Une casse automobile (mise à jour The Chop Shop, 2023).',
@@ -88,7 +88,7 @@ const PROPS = [
      conseils:['Correct en complément, mais d’autres achats rapportent plus pour le même prix.'],
      avis:'Pas prioritaire.'}},
 
-  {id:'bailoffice', cat:'braquage', name:'Bureau de caution', price:1650000, approx:true,
+  {id:'bailoffice', cat:'braquage', name:'Bureau de caution', price:1650000, from:true,
    what:'Primes sur des fugitifs, 100 % solo.',
    fiche:{
      quoi:'Un bureau de prêteur sur caution (mise à jour Bottom Dollar Bounties, 2024).',
@@ -96,7 +96,7 @@ const PROPS = [
      conseils:['Les primes sont courtes et faciles en solo.', 'Surveille les semaines où elles passent en 2×.'],
      avis:'Complément sympa, pas un pilier.'}},
 
-  {id:'arcade', cat:'braquage', name:'Salle d’arcade', price:1235000, from:true, approx:true,
+  {id:'arcade', cat:'braquage', name:'Salle d’arcade', price:1235000, from:true,
    what:'Casse du Diamond Casino (2 joueurs minimum) et un coffre.',
    fiche:{
      quoi:'Une salle d’arcade qui sert de couverture à Lester pour préparer le casse du Diamond Casino.',
@@ -106,7 +106,7 @@ const PROPS = [
        'Achète le bureau de planification, indispensable pour lancer le casse.'],
      avis:'À prendre seulement si tu joues régulièrement en groupe.'}},
 
-  {id:'facility', cat:'braquage', name:'Installation (Facility)', price:1250000, from:true, approx:true,
+  {id:'facility', cat:'braquage', name:'Installation (Facility)', price:1250000, from:true,
    what:'Braquage de la fin du monde (Doomsday), en groupe.',
    fiche:{
      quoi:'Une base militaire souterraine (mise à jour The Doomsday Heist).',
@@ -115,11 +115,11 @@ const PROPS = [
      conseils:['L’acte III est le plus long et le plus payant.', 'Chaque acte a un bonus de 1re réalisation hebdomadaire depuis juillet 2026.'],
      avis:'Seulement pour jouer en groupe.'}},
 
-  {id:'apartment', cat:'braquage', name:'Appartement haut de gamme', price:200000, from:true, approx:true,
+  {id:'apartment', cat:'braquage', name:'Appartement haut de gamme', price:200000, from:true,
    what:'Braquages originaux (Fleeca, Pacific Standard…), en groupe.',
    fiche:{
      quoi:'Un appartement avec salle de planification (il faut le rang 12).',
-     sert:'Il débloque les cinq braquages originaux : Fleeca, Prison Break, Humane Labs, Series A Funding et Pacific Standard.',
+     sert:'Il débloque les cinq braquages originaux : Fleeca, Prison Break, Humane Labs, Series A Funding et Pacific Standard. 35 logements ont une salle de planification, le moins cher est Del Perro Heights, apt 7.',
      obtenir:'Sur le site Dynasty 8 Real Estate. Prends un appartement haut de gamme : seuls ceux-là ont la salle de planification.',
      conseils:['Le Fleeca se fait à 2, les autres à 4.', 'Depuis juillet 2026, les préparations paient plus et chaque finale a un bonus de 1re réalisation hebdo.'],
      avis:'Peu cher et utile si tu as des amis pour jouer.'}},
@@ -159,7 +159,7 @@ const PROPS = [
   {id:'acidupg', cat:'passif', parent:'acidlab', kind:'up', name:'Équipement (labo d’acide)', price:250000,
    what:'Production plus rapide, stock plein ≈ 335 k$ au lieu de ≈ 238 k$. Débloqué après 10 Fooligan Jobs.'},
 
-  {id:'nightclub', cat:'passif', name:'Boîte de nuit', price:1080000, from:true, approx:true,
+  {id:'nightclub', cat:'passif', name:'Boîte de nuit', price:1080000, from:true,
    what:'Entrepôt alimenté par tes autres business, plus un coffre de popularité.',
    fiche:{
      quoi:'Une boîte de nuit avec un grand entrepôt au sous-sol (mise à jour After Hours).',
@@ -179,7 +179,7 @@ const PROPS = [
   {id:'nc_sec', cat:'passif', parent:'nightclub', kind:'up', name:'Sécurité (boîte de nuit)', price:695000, approx:true,
    what:'Confort et protection. N’accélère pas l’entrepôt.'},
 
-  {id:'bunker', cat:'passif', name:'Bunker', price:1165000, from:true, approx:true,
+  {id:'bunker', cat:'passif', name:'Bunker', price:1165000, from:true,
    what:'Armes en production passive. Chumash (≈ 1,65 M$) rend les ventes plus courtes.',
    fiche:{
      quoi:'Un bunker souterrain de fabrication d’armes (mise à jour Gunrunning).',
@@ -205,37 +205,37 @@ const PROPS = [
      obtenir:'Sur le site Maze Bank Foreclosures. Le moins cher (Great Chaparral) suffit.',
      conseils:['Les business de MC s’achètent ensuite depuis l’ordinateur du club-house ou Maze Bank Foreclosures.'],
      avis:'Utile surtout pour le labo de cocaïne.'}},
-  {id:'coke', cat:'passif', parent:'clubhouse', name:'Labo de cocaïne', price:975000, from:true, approx:true,
+  {id:'coke', cat:'passif', parent:'clubhouse', name:'Labo de cocaïne', price:975000, from:true,
    what:'Le meilleur business MC (≈ 525 k$ par stock plein, amélioré).',
    fiche:{
      quoi:'Un labo de cocaïne pour ton club de motards.',
      sert:'Il produit de la cocaïne à partir de fournitures. Tu vends le stock en livraison, ou en petites quantités aux dealers de rue.',
      conseils:['Achète l’équipement et le personnel : sans eux le labo rapporte peu.', 'En solo, vends des petits lots (3 unités ou moins) pour un seul véhicule.'],
      avis:'Le seul business de MC vraiment intéressant aujourd’hui.'}},
-  ...mcUps('coke', 'cocaïne', 880000, 390000, 570000),
-  {id:'meth', cat:'passif', parent:'clubhouse', name:'Labo de meth', price:910000, from:true, approx:true,
+  ...mcUps('coke', 'cocaïne', 935000, 390000, 570000),
+  {id:'meth', cat:'passif', parent:'clubhouse', name:'Labo de meth', price:910000, from:true,
    what:'Correct, mais moins intéressant que le labo d’acide.',
    fiche:{quoi:'Un labo de méthamphétamine pour ton club de motards.', sert:'Production passive vendue en livraison.',
      conseils:['Utile surtout pour alimenter la boîte de nuit.'], avis:'Pas prioritaire.'}},
   ...mcUps('meth', 'meth', 1100000, 331500, 513000),
-  {id:'cash', cat:'passif', parent:'clubhouse', name:'Fabrique de faux billets', price:845000, from:true, approx:true,
+  {id:'cash', cat:'passif', parent:'clubhouse', name:'Fabrique de faux billets', price:845000, from:true,
    what:'+35 % avec le Hands On Car Wash.',
    fiche:{quoi:'Une imprimerie de faux billets pour ton club de motards.', sert:'Production passive vendue en livraison. Le Hands On Car Wash augmente ses gains de 35 %.',
      conseils:['Intéressant seulement si tu as aussi le Car Wash.'], avis:'Pas prioritaire.'}},
   ...mcUps('cash', 'faux billets', 880000, 273000, 456000),
-  {id:'weed', cat:'passif', parent:'clubhouse', name:'Ferme de cannabis', price:715000, from:true, approx:true,
+  {id:'weed', cat:'passif', parent:'clubhouse', name:'Ferme de cannabis', price:715000, from:true,
    what:'+35 % avec Smoke on the Water.',
    fiche:{quoi:'Une ferme de cannabis pour ton club de motards.', sert:'Production passive vendue en livraison. Smoke on the Water augmente ses gains de 35 %.',
      conseils:['Intéressant surtout combiné à Smoke on the Water.'], avis:'Pas prioritaire.'}},
-  ...mcUps('weed', 'cannabis', 990000, 273000, 456000),
-  {id:'docs', cat:'passif', parent:'clubhouse', name:'Faussaire (faux papiers)', price:650000, from:true, approx:true,
+  ...mcUps('weed', 'cannabis', 990000, 273000, 313500),
+  {id:'docs', cat:'passif', parent:'clubhouse', name:'Faussaire (faux papiers)', price:650000, from:true,
    what:'Le moins rentable. Utile seulement pour alimenter la boîte de nuit.',
    fiche:{quoi:'Un atelier de faux papiers pour ton club de motards.', sert:'Production passive vendue en livraison.',
      conseils:['À éviter, sauf pour compléter les marchandises de la boîte de nuit.'], avis:'Le business le moins rentable du jeu.'}},
-  ...mcUps('docs', 'faux papiers', 550000, 195000, 456000),
+  ...mcUps('docs', 'faux papiers', 550000, 195000, 285000),
 
   /* ------------------------------------------------------------------ FAÇADES */
-  {id:'carwash', cat:'facade', name:'Hands On Car Wash', price:1000000, approx:true,
+  {id:'carwash', cat:'facade', name:'Hands On Car Wash', price:1000000,
    what:'Blanchiment, missions de Mr. Faber payées tout de suite, +35 % sur les faux billets.',
    fiche:{
      quoi:'Une station de lavage qui sert de façade de blanchiment (mise à jour Money Fronts, juin 2025).',
@@ -259,17 +259,17 @@ const PROPS = [
      sert:'Il permet de s’enregistrer comme PDG en permanence et d’acheter des entrepôts de marchandises spéciales et de véhicules.',
      obtenir:'Sur le site Dynasty 8 Executive.',
      conseils:['La déco et les options du bureau ne rapportent rien.'], avis:'Seulement si tu veux faire de l’Import/Export.'}},
-  {id:'cargo', cat:'pdg', parent:'ceo', name:'Entrepôt de marchandises (grand)', price:1900000, approx:true,
+  {id:'cargo', cat:'pdg', parent:'ceo', name:'Entrepôt de marchandises (grand)', price:1900000, from:true,
    what:'111 caisses ≈ 2,2 M$, mais très long à remplir en solo.',
    fiche:{quoi:'Un entrepôt pour stocker des caisses de marchandises spéciales.', sert:'Tu achètes des caisses (1 à 3 par mission) et revends l’entrepôt entier ou en partie.',
      obtenir:'Depuis l’ordinateur du bureau de PDG (SecuroServ).',
      conseils:['Remplir 111 caisses en solo prend des heures.', 'La vente complète demande plusieurs véhicules.'], avis:'À éviter en premier achat.'}},
-  {id:'vehiclewh', cat:'pdg', parent:'ceo', name:'Entrepôt de véhicules', price:1500000, from:true, approx:true,
+  {id:'vehiclewh', cat:'pdg', parent:'ceo', name:'Entrepôt de véhicules', price:1500000, from:true,
    what:'Import/Export : ≈ 80 k$ net par voiture haut de gamme.',
    fiche:{quoi:'Un entrepôt pour voitures volées (Import/Export).', sert:'Tu voles des voitures de luxe, puis tu les exportes.',
      obtenir:'Depuis l’ordinateur du bureau de PDG.',
      conseils:['Garde un stock de voitures haut de gamme pour exporter quand il y a un 2×.'], avis:'Complément correct, pas prioritaire.'}},
-  {id:'hangar', cat:'pdg', name:'Hangar (contrebande aérienne)', price:1200000, from:true, approx:true,
+  {id:'hangar', cat:'pdg', name:'Hangar (contrebande aérienne)', price:1200000, from:true,
    what:'Fret aérien. Long à approvisionner.',
    fiche:{quoi:'Un hangar d’aéroport pour la contrebande aérienne (mise à jour Smuggler’s Run).', sert:'Tu récupères du fret par missions et tu le revends par avion.',
      obtenir:'Sur le site Maze Bank Foreclosures.',
@@ -491,5 +491,225 @@ const PRESETS = [
   {act:null, label:'Un jour de jeu (48 min)', min:48, req:[]}
 ];
 
-return {CATS, PROPS, ACTS, PASSIVE, ROADMAP, ROAD_GROUP, AVOID, RULES, PRESETS};
+/* ------------------------------------------------------------------ EMPLACEMENTS
+   Source : gta.wiki (tableaux « Locations »), novembre 2026. Prix de base, hors options.
+   a = quartier ; xy = position approximative quand plusieurs emplacements partagent un quartier. */
+const LOCS = {
+  bunker: [
+    {n:'Paleto Forest', a:'Paleto Forest', p:1165000, tip:'Le moins cher, mais loin de tout : ventes longues.'},
+    {n:'Raton Canyon', a:'Raton Canyon', p:1450000},
+    {n:'Lago Zancudo', a:'Lago Zancudo', p:1550000},
+    {n:'Chumash', a:'Chumash', p:1650000, best:true, tip:'Conseillé : le plus proche de Los Santos pour les ventes.'},
+    {n:'Grapeseed', a:'Grapeseed', p:1750000},
+    {n:'Route 68', a:'Grand Senora Desert', p:1950000, xy:[850,2850]},
+    {n:'Grand Senora Oilfields', a:'Grand Senora Desert', p:2035000, xy:[600,3050]},
+    {n:'Grand Senora Desert', a:'Grand Senora Desert', p:2120000, xy:[1300,3150], tip:'À l’ouest de l’aérodrome de Sandy Shores.'},
+    {n:'Smoke Tree Road', a:'Grand Senora Desert', p:2205000, xy:[2150,3350]},
+    {n:'Thomson Scrapyard', a:'Grand Senora Desert', p:2290000, xy:[2450,3050]},
+    {n:'Farmhouse', a:'Grand Senora Desert', p:2375000, xy:[1800,2300], tip:'Au sud de la prison de Bolingbroke.'}
+  ],
+  nightclub: [
+    {n:'Elysian Island', a:'Elysian Island', p:1080000},
+    {n:'LSIA', a:'LSIA', p:1135000},
+    {n:'Vespucci Canals', a:'Vespucci Canals', p:1320000},
+    {n:'Cypress Flats', a:'Cypress Flats', p:1370000},
+    {n:'Mission Row', a:'Mission Row', p:1440000},
+    {n:'La Mesa', a:'La Mesa', p:1500000},
+    {n:'Strawberry', a:'Strawberry', p:1525000},
+    {n:'Del Perro', a:'Del Perro', p:1645000},
+    {n:'Downtown Vinewood', a:'Downtown Vinewood', p:1670000},
+    {n:'West Vinewood', a:'West Vinewood', p:1700000}
+  ],
+  hangar: [
+    {n:'LSIA Hangar A17', a:'LSIA', p:1200000},
+    {n:'LSIA Hangar 1', a:'LSIA', p:1525000},
+    {n:'Fort Zancudo Hangar 3497', a:'Fort Zancudo', p:2085000, tip:'Donne accès à Fort Zancudo.'},
+    {n:'Fort Zancudo Hangar 3499', a:'Fort Zancudo', p:2650000, tip:'Donne accès à Fort Zancudo.'},
+    {n:'Fort Zancudo Hangar A2', a:'Fort Zancudo', p:3250000, tip:'Donne accès à Fort Zancudo.'}
+  ],
+  facility: [
+    {n:'Paleto Bay', a:'Paleto Bay', p:1250000},
+    {n:'Mount Gordo', a:'Mount Gordo', p:1465000},
+    {n:'Lago Zancudo', a:'Lago Zancudo', p:1670000},
+    {n:'RON Alternates Wind Farm', a:'RON Alternates Wind Farm', p:1855000},
+    {n:'Zancudo River', a:'Zancudo River', p:2100000},
+    {n:'Route 68', a:'Route 68', p:2312500},
+    {n:'Grand Senora Desert', a:'Grand Senora Desert', p:2525000},
+    {n:'Sandy Shores', a:'Sandy Shores', p:2740000},
+    {n:'Land Act Reservoir', a:'Land Act Reservoir', p:2950000}
+  ],
+  clubhouse: [
+    {n:'Great Chaparral (101 Route 68)', a:'Great Chaparral', p:200000},
+    {n:'Sandy Shores (47 Algonquin Blvd)', a:'Sandy Shores', p:210000},
+    {n:'Grapeseed (2111 East Joshua Road)', a:'Grapeseed', p:225000},
+    {n:'Paleto Bay (1 Paleto Blvd)', a:'Paleto Bay', p:242000},
+    {n:'Paleto Bay (68 Paleto Blvd)', a:'Paleto Bay', p:250000},
+    {n:'Del Perro Beach (7 Del Perro Beach)', a:'Del Perro Beach', p:365000},
+    {n:'Vespucci Beach (4 Goma Street)', a:'Vespucci Beach', p:395000},
+    {n:'Rancho (1334 Roy Lowenstein Blvd)', a:'Rancho', p:420000},
+    {n:'La Mesa (137 Capital Blvd)', a:'La Mesa', p:449000},
+    {n:'Pillbox Hill (75 Elgin Avenue)', a:'Pillbox Hill', p:455000},
+    {n:'Downtown Vinewood (2214 Clinton Avenue)', a:'Downtown Vinewood', p:472000},
+    {n:'Hawick (1778 Hawick Avenue)', a:'Hawick', p:495000}
+  ],
+  coke: [
+    {n:'Alamo Sea', a:'Alamo Sea', p:975000},
+    {n:'Paleto Bay', a:'Paleto Bay', p:1098000},
+    {n:'Elysian Island', a:'Elysian Island', p:1462500},
+    {n:'Morningwood', a:'Morningwood', p:1852500}
+  ],
+  meth: [
+    {n:'Grand Senora Desert', a:'Grand Senora Desert', p:910000},
+    {n:'Paleto Bay', a:'Paleto Bay', p:1024800},
+    {n:'Terminal', a:'Terminal', p:1365000},
+    {n:'El Burro Heights', a:'El Burro Heights', p:1729000}
+  ],
+  cash: [
+    {n:'Grand Senora Desert', a:'Grand Senora Desert', p:845000},
+    {n:'Paleto Bay', a:'Paleto Bay', p:951600},
+    {n:'Cypress Flats', a:'Cypress Flats', p:1267500},
+    {n:'Vespucci Canals', a:'Vespucci Canals', p:1605000}
+  ],
+  weed: [
+    {n:'San Chianski Mountain Range', a:'San Chianski Mountain Range', p:715000},
+    {n:'Mount Chiliad', a:'Mount Chiliad', p:805200},
+    {n:'Elysian Island', a:'Elysian Island', p:1072500},
+    {n:'Downtown Vinewood', a:'Downtown Vinewood', p:1358500}
+  ],
+  docs: [
+    {n:'Grapeseed', a:'Grapeseed', p:650000},
+    {n:'Paleto Bay', a:'Paleto Bay', p:732000},
+    {n:'Elysian Island', a:'Elysian Island', p:975000},
+    {n:'Textile City', a:'Textile City', p:1235000}
+  ],
+  agency: [
+    {n:'Little Seoul Tower', a:'Little Seoul', p:2010000},
+    {n:'Celltowa Building', a:'Vespucci Canals', p:2145000},
+    {n:'Rockford Hills', a:'Rockford Hills', p:2415000},
+    {n:'Galileo House', a:'Hawick', p:2830000}
+  ],
+  autoshop: [
+    {n:'Mission Row', a:'Mission Row', p:1670000},
+    {n:'Flints Autos', a:'Strawberry', p:1705000},
+    {n:'Auto Body Shop', a:'Rancho', p:1750000},
+    {n:'Auto Garage', a:'Burton', p:1830000},
+    {n:'Auto Shop', a:'La Mesa', p:1920000}
+  ],
+  salvage: [
+    {n:'Paleto Bay', a:'Paleto Bay', p:1620000, tip:'Le moins cher, mais loin de la ville.'},
+    {n:'Sandy Shores', a:'Sandy Shores', p:2030000},
+    {n:'Murrieta Heights', a:'Murrieta Heights', p:2420000},
+    {n:'Strawberry', a:'Strawberry', p:2570000},
+    {n:'La Puerta', a:'La Puerta', p:2690000}
+  ],
+  arcade: [
+    {n:'Pixel Pete’s', a:'Paleto Bay', p:1235000},
+    {n:'Wonderama', a:'Grapeseed', p:1565000},
+    {n:'Videogeddon', a:'La Mesa', p:1875000},
+    {n:'Warehouse', a:'Davis', p:2135000},
+    {n:'Insert Coin', a:'Rockford Hills', p:2345000},
+    {n:'Eight-Bit', a:'Downtown Vinewood', p:2530000}
+  ],
+  bailoffice: [
+    {n:'Paleto Boulevard', a:'Paleto Bay', p:1650000},
+    {n:'Carson Avenue', a:'Davis', p:2000000},
+    {n:'Red Desert Avenue', a:'Del Perro', p:2350000},
+    {n:'Atlee Street', a:'Mission Row', p:2390000},
+    {n:'Alta Street', a:'Downtown Vinewood', p:2620000}
+  ],
+  ceo: [
+    {n:'Maze Bank West', a:'Del Perro', p:1000000},
+    {n:'Arcadius Business Center', a:'Pillbox Hill', p:2250000},
+    {n:'Lombank West', a:'Del Perro', p:3100000},
+    {n:'Maze Bank Tower', a:'Pillbox Hill', p:4000000}
+  ],
+  cargo: [
+    {n:'Petit · Convenience Store Lockup', a:'Rancho', p:250000},
+    {n:'Petit · Celltowa Unit', a:'La Mesa', p:318000},
+    {n:'Petit · White Widow Garage', a:'La Puerta', p:360000},
+    {n:'Petit · Pacific Bait Storage', a:'Elysian Island', p:376000},
+    {n:'Petit · Pier 400 Utility Building', a:'Elysian Island', p:392000},
+    {n:'Petit · Foreclosed Garage', a:'West Vinewood', p:400000},
+    {n:'Moyen · GEE Warehouse', a:'El Burro Heights', p:880000},
+    {n:'Moyen · Derriere Lingerie Backlot', a:'Del Perro', p:902000},
+    {n:'Moyen · Fridgit Annexe', a:'La Puerta', p:925000},
+    {n:'Moyen · Discount Retail Unit', a:'Downtown Vinewood', p:948000},
+    {n:'Moyen · Disused Factory Outlet', a:'Strawberry', p:971000},
+    {n:'Moyen · LS Marine Building 3', a:'Elysian Island', p:994000},
+    {n:'Moyen · Old Power Station', a:'Rancho', p:1000000},
+    {n:'Moyen · Railyard Warehouse', a:'La Mesa', p:1017000},
+    {n:'Grand · Wholesale Furniture', a:'Cypress Flats', p:1900000},
+    {n:'Grand · West Vinewood Backlot', a:'West Vinewood', p:2135000},
+    {n:'Grand · Xero Gas Factory', a:'LSIA', p:2365000},
+    {n:'Grand · Logistics Depot', a:'La Mesa', p:2600000},
+    {n:'Grand · Bilgeco Warehouse', a:'LSIA', p:2825000},
+    {n:'Grand · Walker & Sons Warehouse', a:'Banning', p:3040000},
+    {n:'Grand · Cypress Warehouses', a:'Cypress Flats', p:3265000},
+    {n:'Grand · Darnell Bros Warehouse', a:'La Mesa', p:3500000}
+  ],
+  vehiclewh: [
+    {n:'La Mesa', a:'La Mesa', p:1500000},
+    {n:'El Burro Heights', a:'El Burro Heights', p:1635000},
+    {n:'Elysian Island', a:'Elysian Island', p:1950000},
+    {n:'LSIA (1)', a:'LSIA', p:2170000},
+    {n:'LSIA (2)', a:'LSIA', p:2300000},
+    {n:'Davis', a:'Davis', p:2495000},
+    {n:'Cypress Flats', a:'Cypress Flats', p:2675000},
+    {n:'La Puerta', a:'La Puerta', p:2735000},
+    {n:'Murrieta Heights', a:'Murrieta Heights', p:2850000}
+  ],
+  apartment: [
+    {n:'Del Perro Heights', count:3, a:'Del Perro', p:200000, tip:'Apt 7 : le moins cher avec salle de braquage.'},
+    {n:'3 Alta Street Tower', count:2, a:'Los Santos', p:217000},
+    {n:'4 Integrity Way', count:3, a:'Los Santos', p:235000},
+    {n:'Richards Majestic', count:3, a:'Los Santos', p:241000},
+    {n:'Tinsel Towers', count:3, a:'Los Santos', p:270000},
+    {n:'Weazel Plaza', count:3, a:'Los Santos', p:304000},
+    {n:'Eclipse Towers', count:5, a:'Los Santos', p:373000, tip:'Plus 3 penthouses (905 k$ à 1,1 M$), salle de braquage non confirmée.'},
+    {n:'Maisons sur pilotis', count:10, a:'Vinewood Hills', p:449000}
+  ],
+  mansion: [
+    {n:'Propriété de Tongva (Tongva Estate)', a:'Tongva Hills', p:11500000, tip:'Buen Vino Road.'},
+    {n:'Résidence de Vinewood (Vinewood Residence)', a:'Vinewood Hills', p:12200000, xy:[150,1150], tip:'Marlowe Drive.'},
+    {n:'Villa de Richman (Richman Villa)', a:'Vinewood Hills', p:12800000, xy:[-600,1000], tip:'Ace Jones Drive, la propriété la plus chère du jeu.'}
+  ],
+  mckenzie: [{n:'McKenzie Field', a:'Grapeseed', p:1475000, xy:[2120,4790], tip:'Sur l’aérodrome de McKenzie Field.'}],
+  garment: [{n:'Darnell Bros Garment Factory', a:'La Mesa', p:2350000, tip:'Popular Street.'}],
+  carwash: [{n:'Hands On Car Wash', a:'Strawberry', p:1000000}],
+  weedshop: [{n:'Smoke on the Water', a:'Vespucci Beach', p:850000}],
+  helitours: [{n:'Higgins Helitours', a:'La Puerta', p:900000}]
+};
+const LOC_NOTES = {
+  kosatka: 'Pas d’emplacement fixe : c’est un sous-marin, tu le fais venir où tu veux sur la côte.',
+  acidlab: 'Pas d’emplacement fixe : le labo est installé dans le Brickade 6x6, qui se déplace avec toi.',
+  firstdose: 'Les missions se lancent à la Freakshop.'
+};
+
+/* Plan schématique de San Andreas, en coordonnées du jeu (x vers l’est, y vers le nord).
+   Les positions sont approximatives, au niveau du quartier. */
+const AREAS = {
+  'LSIA':[-1150,-2850], 'Elysian Island':[150,-2650], 'Terminal':[950,-3000], 'Cypress Flats':[850,-2150], 'Banning':[-150,-2300],
+  'La Puerta':[-800,-1250], 'Vespucci Canals':[-1050,-1000], 'Vespucci Beach':[-1350,-1150], 'Del Perro':[-1450,-550], 'Del Perro Beach':[-1650,-950],
+  'Morningwood':[-1350,-250], 'Rockford Hills':[-800,-150], 'Burton':[-400,-150], 'Little Seoul':[-700,-900], 'Pillbox Hill':[100,-800],
+  'Mission Row':[420,-1000], 'Textile City':[380,-680], 'Strawberry':[150,-1350], 'Davis':[100,-1700], 'Rancho':[450,-1800],
+  'La Mesa':[850,-1200], 'El Burro Heights':[1400,-1950], 'Murrieta Heights':[1100,-1550], 'Hawick':[300,-50],
+  'Downtown Vinewood':[300,250], 'West Vinewood':[-300,250], 'Vinewood Hills':[300,1050], 'Tongva Hills':[-1800,2100],
+  'Great Chaparral':[-250,2300], 'Chumash':[-3150,1050], 'Lago Zancudo':[-2450,2700], 'Fort Zancudo':[-2250,3150], 'Zancudo River':[-900,3100],
+  'Raton Canyon':[-650,4350], 'Paleto Forest':[-600,5600], 'Paleto Bay':[-200,6350], 'Mount Chiliad':[450,5550],
+  'Grapeseed':[1900,4850], 'Alamo Sea':[900,3720], 'Sandy Shores':[1800,3700], 'Grand Senora Desert':[1300,3000], 'Route 68':[850,2750],
+  'RON Alternates Wind Farm':[2250,1900], 'Land Act Reservoir':[1900,400], 'Mount Gordo':[2900,5600], 'San Chianski Mountain Range':[2900,4400]
+};
+const MAP = {
+  bounds: {minX:-3800, maxX:4100, minY:-3800, maxY:7500},
+  coast: [[-1900,-3450],[-1150,-3600],[-350,-3450],[500,-3550],[1300,-3450],[1650,-2900],[2000,-2300],[2500,-1700],[2800,-900],[2900,0],
+    [2950,900],[2950,1700],[3300,2400],[3700,3200],[3800,4000],[3700,4800],[3500,5300],[3100,5800],[2500,6300],[1800,6600],[1100,6900],
+    [400,7200],[-300,7000],[-700,6500],[-1200,6000],[-1700,5400],[-2200,4700],[-2600,4000],[-2950,3300],[-3150,2600],[-3350,1900],
+    [-3450,1200],[-3300,500],[-2800,0],[-2300,-300],[-1950,-700],[-1750,-1150],[-1650,-1600],[-2050,-2500],[-2100,-3100]],
+  lake: {x:1250, y:4250, rx:950, ry:430},
+  labels: [['Los Santos',2000,-900],['LSIA',-1250,-3150],['Vinewood',300,650],['Chumash',-2950,1450],['Fort Zancudo',-2150,3550],
+    ['Alamo Sea',1250,4250],['Sandy Shores',1900,3400],['Grapeseed',2200,5200],['Paleto Bay',-150,6750],['Mont Chiliad',550,5950],
+    ['Désert de Grand Senora',1400,2500],['Mont Gordo',2950,6000]]
+};
+
+return {CATS, PROPS, ACTS, PASSIVE, ROADMAP, ROAD_GROUP, AVOID, RULES, PRESETS, LOCS, LOC_NOTES, AREAS, MAP};
 })();

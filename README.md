@@ -27,6 +27,12 @@ Pour passer tes données d’un appareil à l’autre : **Mon empire → Sauvega
 
 Tu peux aussi télécharger un fichier de sauvegarde et le réimporter plus tard.
 
+## Emplacements et carte
+
+Chaque fiche de bâtiment liste tous ses emplacements achetables avec leur prix (143 au total, source : tableaux « Locations » de gta.wiki, novembre 2026) et les place sur un petit plan. « Mon emplacement » sous le tableau indique lequel tu possèdes : il est entouré sur les cartes.
+
+L’onglet **Carte** montre tous les bâtiments, un type à la fois ou seulement les tiens. C’est un plan schématique dessiné pour l’appli, sans la carte officielle de Rockstar : les positions sont approximatives, au niveau du quartier. Les quartiers et le tracé sont dans `data.js` (`AREAS`, `MAP`).
+
 ## Plan d’achat dynamique
 
 L’onglet Achats classe tous les achats possibles selon le temps qu’il faut pour qu’ils soient rentabilisés :

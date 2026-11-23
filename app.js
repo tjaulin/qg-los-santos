@@ -2,7 +2,8 @@
 (function(){
 'use strict';
 
-const {CATS, PROPS, ACTS, PASSIVE, ROADMAP, ROAD_GROUP, AVOID, RULES, PRESETS} = window.QG_DATA;
+const {CATS, PROPS, ACTS, PASSIVE, ROADMAP, ROAD_GROUP, AVOID, RULES, PRESETS, LOCS, LOC_NOTES, AREAS, MAP} = window.QG_DATA;
+const MK_CLASS = {braquage:'mk-b', passif:'mk-p', facade:'mk-f', pdg:'mk-c', vehicule:'mk-c'};
 const PROP = Object.fromEntries(PROPS.map(p => [p.id, p]));
 const ACT = Object.fromEntries(ACTS.map(a => [a.id, a]));
 const ACTIONS_URL = 'https://github.com/tjaulin/qg-los-santos/actions/workflows/bonus.yml';
@@ -101,7 +102,7 @@ function localDayKey(t){ const d = new Date(t); return d.getFullYear() + '-' + S
 const LS_KEY = 'qg-ls-state-v1', UI_KEY = 'qg-ls-ui-v1', BONUS_KEY = 'qg-ls-bonus-v1';
 function defaults(){
   return {v:2, settings:{platform:'ps5', gtaplus:false, mode:'solo', pace:'normal', deduct:true, addCash:true, hours:10},
-    cash:0, owned:{}, daily:{key:'',done:{}}, weekly:{key:'',done:{},salvage:0}, monthly:{key:'',done:{}},
+    cash:0, owned:{}, locs:{}, daily:{key:'',done:{}}, weekly:{key:'',done:{},salvage:0}, monthly:{key:'',done:{}},
     timers:[], log:[], notes:'', updated:0};
 }
 function migrateOwned(ow){
@@ -125,6 +126,7 @@ function migrate(s){
   o.timers = Array.isArray(s.timers) ? s.timers.filter(t => t && t.id && t.end) : [];
   o.log = Array.isArray(s.log) ? s.log.filter(e => e && e.id && isFinite(e.amount)) : [];
   o.cash = isFinite(+s.cash) ? +s.cash : 0;
+  o.locs = Object.assign({}, s.locs || {});
   o.v = 2;
   return o;
 }
@@ -132,9 +134,9 @@ function loadLS(key){ try { const v = localStorage.getItem(key); return v ? JSON
 function saveLS(key, v){ try { localStorage.setItem(key, JSON.stringify(v)); return true; } catch(e){ return false; } }
 
 let state = migrate(loadLS(LS_KEY));
-const ui = Object.assign({budget:120, filter:'mine', introHidden:false, sound:false}, loadLS(UI_KEY) || {});
+const ui = Object.assign({budget:120, filter:'mine', introHidden:false, sound:false, mapf:'all'}, loadLS(UI_KEY) || {});
 Object.assign(ui, {completing:null, exportMsg:'', importMsg:'', exportCode:'', importDraft:'', bonusMsg:'', bonusBusy:false, q:''});
-function saveUI(){ saveLS(UI_KEY, {budget:ui.budget, filter:ui.filter, introHidden:ui.introHidden, sound:ui.sound}); }
+function saveUI(){ saveLS(UI_KEY, {budget:ui.budget, filter:ui.filter, introHidden:ui.introHidden, sound:ui.sound, mapf:ui.mapf}); }
 
 function setSync(kind, text){
   const el = document.getElementById('sync'); if (!el) return;
@@ -476,7 +478,7 @@ function weeksTxt(w){
    RENDU
    ====================================================================== */
 const view = document.getElementById('view');
-const TABS = ['tableau','routines','empire','achats','fiches','methodes','chronos','journal'];
+const TABS = ['tableau','routines','empire','achats','fiches','carte','methodes','chronos','journal'];
 let route = {view:'tableau'};
 
 function checkRow(kind, it, done){
@@ -755,6 +757,123 @@ function renderAchats(){
   return h;
 }
 
+/* ---------- Carte et emplacements ---------- */
+function locXY(l){ return l.xy || AREAS[l.a] || null; }
+function locTypes(){ return PROPS.filter(p => LOCS[p.id]); }
+function cheapestIdx(id){ const L = LOCS[id]; let m = 0; L.forEach((l, i) => { if (l.p < L[m].p) m = i; }); return m; }
+function mineIdx(id){ const v = state.locs[id]; return v === undefined || v === null ? -1 : +v; }
+function locTip(p, l, mine){ return p.name + ' · ' + l.n + (l.a && l.a !== l.n ? ' (' + l.a + ')' : '') + ' · ' + (l.count ? 'dès ' : '') + fmt(l.p) + (mine ? ' · le tien' : ''); }
+/* Plan schématique : coordonnées du jeu projetées dans le viewBox (x vers l'est, y vers le nord). */
+function mapSVG(markers, opts){
+  opts = opts || {};
+  const B = MAP.bounds, W = B.maxX - B.minX, Hh = B.maxY - B.minY;
+  const P = (x, y) => [x - B.minX, B.maxY - y];
+  const coast = MAP.coast.map(([x, y]) => P(x, y).join(',')).join(' ');
+  const [lx, ly] = P(MAP.lake.x, MAP.lake.y);
+  let svg = '<svg class="map" viewBox="0 0 ' + W + ' ' + Hh + '" role="img" aria-label="' + esc(opts.aria || 'Plan de San Andreas') + '">' +
+    '<rect class="map-water" width="' + W + '" height="' + Hh + '"/><polygon class="map-land" points="' + coast + '"/>' +
+    '<ellipse class="map-water map-lake" cx="' + lx + '" cy="' + ly + '" rx="' + MAP.lake.rx + '" ry="' + MAP.lake.ry + '"/>';
+  MAP.labels.forEach(([t, x, y]) => { const [a, b] = P(x, y); svg += '<text class="map-label" x="' + a + '" y="' + b + '" text-anchor="middle">' + esc(t.toUpperCase()) + '</text>'; });
+  const seen = {};
+  const sorted = markers.slice().sort((a, b) => (a.mine ? 1 : 0) - (b.mine ? 1 : 0));
+  sorted.forEach(m => {
+    const r = m.r || 60;
+    const key = Math.round(m.x / 80) + ',' + Math.round(m.y / 80);
+    const n = seen[key] = (seen[key] || 0) + 1;
+    let [cx, cy] = P(m.x, m.y);
+    if (n > 1){ const ang = n * 2.4; cx += Math.cos(ang) * r * 2.2; cy += Math.sin(ang) * r * 2.2; }
+    cx = Math.round(cx); cy = Math.round(cy);
+    svg += '<g class="mk ' + m.cls + (m.mine ? ' mine' : '') + '" tabindex="0" data-tip="' + esc(m.tip) + '" data-x="' + cx + '" data-y="' + cy + '" data-r="' + r + '">' +
+      (m.mine ? '<circle class="mk-ring" cx="' + cx + '" cy="' + cy + '" r="' + Math.round(r * 1.55) + '"/>' : '') +
+      '<circle class="mk-dot" cx="' + cx + '" cy="' + cy + '" r="' + r + '"/>' +
+      (m.label ? '<text x="' + cx + '" y="' + Math.round(cy + r * 0.42) + '" text-anchor="middle" style="font-size:' + Math.round(r * 1.15) + 'px">' + esc(m.label) + '</text>' : '') + '</g>';
+  });
+  return '<div class="mapwrap' + (opts.mini ? ' mini' : '') + '">' + svg + '</svg><div class="pop" hidden></div></div>';
+}
+function legend(){
+  return '<div class="legend">' + [['mk-b','Braquages & contrats'],['mk-p','Business passifs'],['mk-f','Façades'],['mk-c','PDG & contrebande']]
+    .map(([c, t]) => '<span><i class="' + c + '"></i>' + t + '</span>').join('') + '<span><i class="ring"></i>Ton emplacement</span></div>';
+}
+function locTable(p){
+  const L = LOCS[p.id], ci = cheapestIdx(p.id), mi = mineIdx(p.id);
+  return '<div class="scroll-x"><table class="ptable loc"><thead><tr><th>#</th><th>Emplacement</th><th>Quartier</th><th>Prix</th></tr></thead><tbody>' +
+    L.map((l, i) => '<tr class="' + (mi === i ? 'mine' : '') + '"><td class="n">' + (i + 1) + '</td><td><b>' + esc(l.n) + '</b>' +
+      (l.count ? ' <span class="small muted">(' + l.count + ' logements)</span>' : '') +
+      (L.length > 1 && i === ci ? ' <span class="pill ok">le moins cher</span>' : '') + (l.best ? ' <span class="pill solid">conseillé</span>' : '') +
+      (mi === i ? ' <span class="pill next">le tien</span>' : '') + (l.tip ? '<br><span class="small muted">' + esc(l.tip) + '</span>' : '') +
+      '</td><td>' + esc(l.a || '—') + '</td><td class="n">' + (l.count ? 'dès ' : '') + fmt(l.p) + '</td></tr>').join('') +
+    '</tbody></table></div>' +
+    '<div class="field" style="margin-top:12px"><label for="myloc-' + p.id + '">Mon emplacement</label><select id="myloc-' + p.id + '" data-myloc="' + p.id + '">' +
+    '<option value="">Je ne l’ai pas, ou pas précisé</option>' + L.map((l, i) => '<option value="' + i + '"' + (mi === i ? ' selected' : '') + '>' + (i + 1) + '. ' + esc(l.n) + '</option>').join('') + '</select></div>';
+}
+function locMarkers(p, r, numbered){
+  const mi = mineIdx(p.id);
+  return LOCS[p.id].map((l, i) => { const xy = locXY(l); return xy ? {x:xy[0], y:xy[1], r, cls:MK_CLASS[p.cat], mine: mi === i, label: numbered ? String(i + 1) : (mi === i ? '★' : ''), tip: locTip(p, l, mi === i)} : null; }).filter(Boolean);
+}
+function locCard(p){
+  if (!LOCS[p.id]){
+    return LOC_NOTES[p.id] ? '<div class="card"><h2>Emplacement</h2><p style="margin:0">' + esc(LOC_NOTES[p.id]) + '</p></div>' : '';
+  }
+  const L = LOCS[p.id];
+  const unmapped = L.filter(l => !locXY(l)).length;
+  return '<div class="card"><h2>' + (L.length > 1 ? L.length + ' emplacements au choix' : 'Emplacement') + ' <small>' +
+    (L.length > 1 ? 'de ' + short(Math.min(...L.map(l => l.p))) + ' à ' + short(Math.max(...L.map(l => l.p))) : fmt(L[0].p)) + '</small></h2>' +
+    '<div class="locgrid"><div>' + locTable(p) + '</div><div>' + mapSVG(locMarkers(p, 150, L.length > 1), {mini:true, aria:'Emplacements : ' + p.name}) +
+    '<p class="small muted" style="margin:6px 0 0">Plan schématique, positions au niveau du quartier.' + (unmapped ? ' ' + unmapped + ' emplacement(s) sans position précise.' : '') +
+    ' <a href="#carte" data-act="mapf" data-v="' + p.id + '">Voir sur la grande carte</a></p></div></div></div>';
+}
+function renderCarte(){
+  const types = locTypes();
+  const f = ui.mapf === 'mine' || ui.mapf === 'all' || LOCS[ui.mapf] ? ui.mapf : 'all';
+  let markers = [];
+  types.forEach(p => {
+    if (f === p.id) markers = markers.concat(locMarkers(p, 110, true));
+    else if (f === 'all') markers = markers.concat(locMarkers(p, 60, false));
+    else if (f === 'mine'){ const mi = mineIdx(p.id); if (mi >= 0) markers = markers.concat(locMarkers(p, 110, false).filter(m => m.mine)); }
+  });
+  const mineList = types.filter(p => mineIdx(p.id) >= 0);
+  const opts = '<option value="all"' + (f === 'all' ? ' selected' : '') + '>Tous les bâtiments</option>' +
+    '<option value="mine"' + (f === 'mine' ? ' selected' : '') + '>Mes emplacements (' + mineList.length + ')</option>' +
+    CATS.map(c => { const ts = types.filter(p => p.cat === c.id); return ts.length ? '<optgroup label="' + esc(c.name) + '">' + ts.map(p => '<option value="' + p.id + '"' + (f === p.id ? ' selected' : '') + '>' + esc(p.name) + ' (' + LOCS[p.id].length + ')</option>').join('') + '</optgroup>' : ''; }).join('');
+  let h = head('Carte', 'Où se trouvent les bâtiments achetables, avec leurs prix. Plan schématique : les positions sont approximatives, au niveau du quartier.',
+    '<div class="field" style="min-width:min(280px,100%)"><label for="map-f">Afficher</label><select id="map-f" data-mapf>' + opts + '</select></div>');
+  h += '<div class="grid"><div class="card s7">' + mapSVG(markers, {aria:'Carte des bâtiments'}) + legend() +
+    '<p class="small muted" style="margin:8px 0 0">Touche ou survole un point pour voir le bâtiment et son prix.</p></div><div class="stack s5">';
+  if (LOCS[f]){
+    const p = PROP[f];
+    h += '<div class="card"><h2>' + esc(p.name) + ' <small>' + LOCS[f].length + ' emplacement' + (LOCS[f].length > 1 ? 's' : '') + '</small></h2>' + locTable(p) +
+      '<div class="row" style="margin-top:12px"><a class="btn sm ghost" href="#fiche-' + ficheOf(p.id) + '">Fiche complète</a></div></div>';
+  } else if (f === 'mine'){
+    h += '<div class="card"><h2>Mes emplacements</h2>' + (mineList.length ? '<ul class="avoid">' + mineList.map(p => { const l = LOCS[p.id][mineIdx(p.id)];
+      return '<li><b>' + esc(p.name) + '</b><span class="small muted">' + esc(l.n) + ' · ' + esc(l.a) + '</span></li>'; }).join('') + '</ul>'
+      : '<p style="margin:0">Aucun emplacement indiqué. Choisis un type de bâtiment ci-dessus, puis « Mon emplacement » sous le tableau.</p>') + '</div>';
+  } else {
+    h += '<div class="card"><h2>Par type</h2><ul class="avoid">' + types.map(p => { const L = LOCS[p.id];
+      return '<li><div class="row between"><button class="linkbtn" data-act="mapf" data-v="' + p.id + '">' + esc(p.name) + '</button><span class="small">' + L.length + ' · dès <b class="money">' + short(Math.min(...L.map(l => l.p))) + '</b></span></div>' +
+        (mineIdx(p.id) >= 0 ? '<span class="small">Le tien : ' + esc(L[mineIdx(p.id)].n) + '</span>' : '') + '</li>'; }).join('') + '</ul></div>';
+  }
+  h += '</div></div>';
+  return h;
+}
+function bindMaps(){
+  document.querySelectorAll('.mapwrap').forEach(wrap => {
+    const svg = wrap.querySelector('svg'), pop = wrap.querySelector('.pop');
+    const W = MAP.bounds.maxX - MAP.bounds.minX;
+    const show = g => {
+      const k = svg.getBoundingClientRect().width / W;
+      pop.textContent = g.dataset.tip; pop.hidden = false;
+      pop.style.left = (+g.dataset.x * k) + 'px'; pop.style.top = ((+g.dataset.y - +g.dataset.r) * k - 4) + 'px';
+    };
+    wrap.querySelectorAll('.mk').forEach(g => {
+      g.addEventListener('pointerenter', () => show(g));
+      g.addEventListener('click', () => show(g));
+      g.addEventListener('focus', () => show(g));
+      g.addEventListener('pointerleave', () => { pop.hidden = true; });
+      g.addEventListener('blur', () => { pop.hidden = true; });
+    });
+  });
+}
+
 /* ---------- Fiches ---------- */
 function renderFiches(){
   const q = ui.q.trim().toLowerCase();
@@ -790,6 +909,7 @@ function renderFiche(id){
   h += '<div class="card fiche">' + section('C’est quoi', f.quoi ? '<p>' + esc(f.quoi) + '</p>' : '') + section('À quoi ça sert', f.sert ? '<p>' + esc(f.sert) + '</p>' : '') +
     section('Comment l’obtenir', f.obtenir ? '<p>' + esc(f.obtenir) + '</p>' : '') +
     section('Conseils', f.conseils && f.conseils.length ? '<ul>' + f.conseils.map(c => '<li>' + esc(c) + '</li>').join('') + '</ul>' : '') + '</div>';
+  h += locCard(p);
   if (ups.length) h += '<div class="card"><h2>Améliorations <small>chacune se coche à part</small></h2><div class="checks">' + ups.map(k => propRow(k, 0, true)).join('') + '</div></div>';
   if (subs.length) h += '<div class="card"><h2>Ce qu’il débloque</h2><div class="checks">' + subs.map(k => propRow(k, 0)).join('') + '</div></div>';
   h += '</div><div class="stack s4">';
@@ -951,7 +1071,7 @@ function barPath(x, y, w, h, r){
 }
 
 /* ---------- Rendu principal et navigation ---------- */
-const VIEWS = {tableau:renderDash, routines:renderRoutines, empire:renderEmpire, achats:renderAchats, fiches:renderFiches,
+const VIEWS = {tableau:renderDash, routines:renderRoutines, empire:renderEmpire, achats:renderAchats, fiches:renderFiches, carte:renderCarte,
   methodes:renderMethodes, chronos:renderChronos, journal:renderJournal,
   fiche: () => renderFiche(route.id), activite: () => renderActivite(route.id)};
 function render(){
@@ -975,6 +1095,7 @@ function render(){
     }
   }
   bindChart();
+  bindMaps();
 }
 function bindChart(){
   const chart = document.getElementById('chart'); if (!chart) return;
@@ -1034,6 +1155,7 @@ view.addEventListener('click', e => {
   else if (act === 'budget'){ ui.budget = +b.dataset.min; ui.completing = null; saveUI(); render(); }
   else if (act === 'filter'){ ui.filter = b.dataset.v; saveUI(); render(); }
   else if (act === 'sync-bonus'){ syncBonus(true); }
+  else if (act === 'mapf'){ e.preventDefault(); ui.mapf = b.dataset.v; saveUI(); if (location.hash === '#carte') render(); else location.hash = 'carte'; }
   else if (act === 'salvage'){ state.weekly.salvage = Math.min(3, Math.max(0, (state.weekly.salvage || 0) + (+b.dataset.d))); commit(); }
   else if (act === 'complete'){ ui.completing = id; render(); const i = document.getElementById('cf-amt'); if (i){ i.focus(); i.select(); } }
   else if (act === 'cancel-complete'){ ui.completing = null; render(); }
@@ -1093,6 +1215,13 @@ view.addEventListener('change', e => {
     commit();
   } else if (el.dataset.own){
     setOwned(el.dataset.own, el.checked); commit();
+  } else if (el.dataset.myloc){
+    const id = el.dataset.myloc;
+    if (el.value === '') delete state.locs[id];
+    else { state.locs[id] = +el.value; if (!own(id)) setOwned(id, true); }
+    commit();
+  } else if (el.hasAttribute('data-mapf')){
+    ui.mapf = el.value; saveUI(); render();
   } else if (el.dataset.level){
     setOwned(el.dataset.level, +el.value); commit();
   } else if (el.dataset.setting){
