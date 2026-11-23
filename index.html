@@ -1,0 +1,1373 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>QG Los Santos</title>
+<meta name="description" content="Copilote GTA Online : suivi de ton empire, plans de session, priorités d’achat, chronos de recharge et journal de gains.">
+<meta name="theme-color" content="#fbfaff" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#161325" media="(prefers-color-scheme: dark)">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="QG LS">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon-180.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Big+Shoulders+Display:wght@700;800;900&display=swap">
+<style>
+:root{
+  /* Layout : coque d’appli — barre collante (marque + solde) et onglets défilants ; contenu 1120px max, grille 12 colonnes repliée en 1 colonne sous 860px */
+  --bg:#f2f0f6; --bar:#fbfaff; --surface:#ffffff; --surface-2:#ece8f3; --line:#dcd6e7;
+  --fg:#1c1530; --muted:#5f5677; --accent:#c8441f; --accent-ink:#ffffff; --accent-soft:#fbe5dc;
+  --money:#1a7a44; --warn:#9a5b00; --focus:#3550d0; --pop-bg:#1c1530; --pop-fg:#ffffff;
+  --sunset:linear-gradient(90deg,#ff8a3d,#ff4f6d 45%,#8b5cf6);
+  --font-display:"Big Shoulders Display","Arial Narrow","Roboto Condensed",sans-serif;
+  --font-body:"Barlow",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --radius:10px; color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#110f1b; --bar:#161325; --surface:#1a1729; --surface-2:#252036; --line:#322c47;
+    --fg:#f1ecf7; --muted:#a69dbf; --accent:#ff7b52; --accent-ink:#1b0c06; --accent-soft:#3a2026;
+    --money:#5fd394; --warn:#f2b84b; --focus:#8ea4ff; --pop-bg:#f1ecf7; --pop-fg:#1a1729; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#110f1b; --bar:#161325; --surface:#1a1729; --surface-2:#252036; --line:#322c47;
+  --fg:#f1ecf7; --muted:#a69dbf; --accent:#ff7b52; --accent-ink:#1b0c06; --accent-soft:#3a2026;
+  --money:#5fd394; --warn:#f2b84b; --focus:#8ea4ff; --pop-bg:#f1ecf7; --pop-fg:#1a1729; color-scheme:dark;
+}
+html{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);-webkit-text-size-adjust:100%}
+*{box-sizing:border-box}
+body{margin:0}
+img{max-width:100%}
+[hidden]{display:none!important}
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:10;background:var(--bar)}
+a{color:var(--accent);font-weight:600}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px;border-radius:4px}
+.wrap{max-width:1120px;margin:0 auto;padding-left:max(16px, env(safe-area-inset-left,0px));padding-right:max(16px, env(safe-area-inset-right,0px))}
+
+/* ---------- En-tête ---------- */
+.shell-head{position:sticky;top:env(safe-area-inset-top,0px);z-index:9;background:var(--bar);border-bottom:1px solid var(--line)}
+.shell-head::after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:3px;background:var(--sunset)}
+.topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:10px 4px}
+.brand{display:flex;align-items:baseline;gap:10px;min-width:0}
+.brand b{font-family:var(--font-display);font-weight:900;font-size:26px;line-height:1;letter-spacing:.02em;text-transform:uppercase;white-space:nowrap}
+.sync{font-size:12px;color:var(--muted);white-space:nowrap;display:inline-flex;align-items:center;gap:5px}
+.sync i{width:7px;height:7px;border-radius:50%;background:var(--muted);display:inline-block}
+.sync.ok i{background:var(--money)} .sync.err i{background:var(--warn)}
+.cashpill{display:flex;flex-direction:column;align-items:flex-end;line-height:1.1}
+.cashpill span{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.cashpill b{font-family:var(--font-display);font-weight:800;font-size:24px;color:var(--money);font-variant-numeric:tabular-nums;white-space:nowrap}
+.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.tabs::-webkit-scrollbar{display:none}
+.tab{appearance:none;border:0;background:none;color:var(--muted);font:600 14px/1 var(--font-body);padding:12px 10px 13px;border-bottom:3px solid transparent;white-space:nowrap;cursor:pointer;position:relative;z-index:1}
+.tab:hover{color:var(--fg)}
+.tab[aria-current="page"]{color:var(--fg);border-bottom-color:var(--fg)}
+.tab .dot{display:inline-block;min-width:18px;padding:0 5px;margin-left:5px;border-radius:99px;background:var(--accent);color:var(--accent-ink);font-size:11px;line-height:18px;text-align:center}
+
+@media (max-width:520px){.sync span{display:none}}
+
+/* ---------- Structure ---------- */
+main{padding-block:22px 40px}
+.view-head{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:18px}
+.view-head h1{font-family:var(--font-display);font-weight:900;font-size:clamp(32px,6vw,48px);line-height:.95;text-transform:uppercase;letter-spacing:.01em;margin:0;text-wrap:balance}
+.lede{color:var(--muted);max-width:65ch;margin:6px 0 0}
+.grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:16px;align-items:start}
+.s4{grid-column:span 4}.s5{grid-column:span 5}.s6{grid-column:span 6}.s7{grid-column:span 7}.s8{grid-column:span 8}.s12{grid-column:1/-1}
+@media (max-width:860px){.grid>*{grid-column:1/-1}}
+.stack{display:flex;flex-direction:column;gap:16px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;min-width:0}
+.card.hot{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.card h2{font-family:var(--font-display);font-weight:800;font-size:21px;line-height:1.1;text-transform:uppercase;letter-spacing:.03em;margin:0 0 12px;display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:4px 10px}
+.card h2 small{font-family:var(--font-body);font-size:13px;font-weight:500;text-transform:none;letter-spacing:0;color:var(--muted)}
+.section-title{font-family:var(--font-display);font-weight:800;font-size:26px;text-transform:uppercase;letter-spacing:.02em;margin:30px 0 4px}
+.section-sub{color:var(--muted);margin:0 0 12px;max-width:65ch}
+.eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.muted{color:var(--muted)}
+.small{font-size:13px}
+.money{color:var(--money);font-variant-numeric:tabular-nums;font-weight:700;white-space:nowrap}
+.num{font-variant-numeric:tabular-nums}
+.big{font-family:var(--font-display);font-weight:800;font-size:clamp(40px,7vw,56px);line-height:1;font-variant-numeric:tabular-nums}
+.row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.between{justify-content:space-between}
+.meter{height:8px;border-radius:99px;background:var(--surface-2);overflow:hidden}
+.meter>i{display:block;height:100%;background:var(--accent);border-radius:99px}
+.meter.money>i{background:var(--money)}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;line-height:1;padding:5px 8px;border-radius:99px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.pill.ok{color:var(--money);border-color:currentColor}
+.pill.next{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.pill.warn{color:var(--warn);border-color:currentColor}
+.pill.solid{background:var(--surface-2);border-color:var(--surface-2);color:var(--fg)}
+
+/* ---------- Contrôles ---------- */
+.btn{appearance:none;display:inline-flex;align-items:center;justify-content:center;gap:6px;border:1px solid var(--line);background:var(--surface-2);color:var(--fg);font:600 14px/1.2 var(--font-body);padding:9px 14px;border-radius:8px;cursor:pointer;min-height:40px;text-decoration:none}
+.btn:hover{border-color:var(--muted)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.06)}
+.btn.ghost{background:transparent}
+.btn.sm{padding:5px 10px;min-height:32px;font-size:13px}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.chips{display:flex;flex-wrap:wrap;gap:6px}
+.chip{appearance:none;border:1px solid var(--line);background:var(--surface);color:var(--fg);font:600 13px/1 var(--font-body);padding:8px 12px;border-radius:99px;cursor:pointer;min-height:34px}
+.chip[aria-pressed="true"]{background:var(--fg);color:var(--bg);border-color:var(--fg)}
+input[type=text],input[type=number],select,textarea{font:500 15px/1.3 var(--font-body);color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:9px 10px;min-height:40px;width:100%;min-width:0}
+textarea{min-height:110px;resize:vertical;line-height:1.5}
+input[type=checkbox]{width:20px;height:20px;accent-color:var(--accent);margin:2px 0 0;flex:none;cursor:pointer}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field label,.field>span{font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.04em;text-transform:uppercase}
+.form-row{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-end}
+.form-row .field{flex:1 1 160px}
+.toggle{display:flex;gap:10px;align-items:flex-start;cursor:pointer}
+
+/* ---------- Listes à cocher ---------- */
+.checks{display:flex;flex-direction:column}
+.check{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);cursor:pointer}
+.check:first-child{border-top:0;padding-top:2px}
+.check .body{flex:1;min-width:0;display:flex;flex-direction:column}
+.check .label{font-weight:600}
+.check .note{font-size:13px;color:var(--muted)}
+.check .gain{margin-left:auto;text-align:right;font-size:13px;color:var(--muted);max-width:42%}
+.check.done .label{text-decoration:line-through;color:var(--muted)}
+.check.done .gain .money{color:var(--muted)}
+.counter{display:flex;align-items:center;gap:6px;flex:none}
+.counter b{min-width:42px;text-align:center;font-variant-numeric:tabular-nums}
+
+/* ---------- Tableau de bord ---------- */
+.intro{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:10px}
+.intro div{background:var(--surface-2);border-radius:8px;padding:12px}
+.intro b{display:block;font-family:var(--font-display);font-size:28px;line-height:1;color:var(--accent)}
+@media (max-width:640px){.intro{grid-template-columns:1fr}}
+.kv{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:14px}
+.kv div{min-width:0}
+.kv b{display:block;font-size:18px;font-variant-numeric:tabular-nums}
+@media (max-width:420px){.kv{grid-template-columns:1fr 1fr}}
+.reset{font-size:13px;color:var(--muted)}
+.event li{margin:4px 0}
+.event ul{padding-left:18px;margin:8px 0}
+
+/* ---------- Plan de session ---------- */
+.plan-sum{display:flex;flex-wrap:wrap;gap:6px 18px;align-items:baseline;margin:14px 0 6px}
+.plan-sum .big{color:var(--money)}
+.timeline{list-style:none;margin:10px 0 0;padding:0;position:relative}
+.timeline li{display:grid;grid-template-columns:64px minmax(0,1fr);gap:12px;padding:12px 0;border-top:1px solid var(--line)}
+.timeline li:first-child{border-top:0}
+.when{display:flex;flex-direction:column;font-variant-numeric:tabular-nums;line-height:1.2}
+.when b{font-size:17px}
+.when span{font-size:12px;color:var(--muted)}
+.what h3{margin:0;font-size:17px;line-height:1.25}
+.what .meta{font-size:13px;color:var(--muted);margin-top:2px}
+.what .tip{font-size:13px;margin:6px 0 0;max-width:65ch}
+.what .actions{margin-top:8px}
+.step-aux .what h3{font-weight:600;color:var(--muted)}
+.confirm{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:8px}
+.confirm input{max-width:180px}
+.week-rhythm{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
+.week-rhythm div{background:var(--surface-2);border-radius:8px;padding:10px 12px;min-width:0}
+.week-rhythm b{display:block;font-family:var(--font-display);text-transform:uppercase;font-size:18px;letter-spacing:.03em}
+@media (max-width:760px){.week-rhythm{grid-template-columns:1fr 1fr}}
+
+/* ---------- Empire ---------- */
+.prop{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line);cursor:pointer}
+.prop:first-child{border-top:0;padding-top:2px}
+.prop .body{flex:1;min-width:0;display:flex;flex-direction:column}
+.prop .label{font-weight:600}
+.prop .note{font-size:13px;color:var(--muted)}
+.prop .price{font-size:13px;font-weight:600;white-space:nowrap;font-variant-numeric:tabular-nums;color:var(--muted)}
+.prop.is-owned .price{color:var(--money)}
+.prop.d1{padding-left:28px}.prop.d2{padding-left:56px}
+.prop.locked{opacity:.55;cursor:default}
+.settings{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.settings{grid-template-columns:1fr 1fr}}
+@media (max-width:420px){.settings{grid-template-columns:1fr}}
+.notice{font-size:13px;color:var(--warn);margin:10px 0 0}
+
+/* ---------- Achats ---------- */
+.road{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.road li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+.road li.next{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+.road li.done{background:transparent}
+.road .n{font-family:var(--font-display);font-weight:900;font-size:34px;line-height:1;color:var(--muted)}
+.road li.next .n{color:var(--accent)}
+.road h3{margin:0;font-size:18px;line-height:1.25}
+.road li.done h3{color:var(--muted)}
+.road p{margin:6px 0 0;max-width:68ch}
+.road .props{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.road .foot{display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;margin-top:10px}
+.rules{margin:0;padding-left:20px}
+.rules li{margin:6px 0;max-width:68ch}
+.avoid{list-style:none;margin:0;padding:0}
+.avoid li{padding:9px 0;border-top:1px solid var(--line)}
+.avoid li:first-child{border-top:0;padding-top:0}
+.avoid b{display:block}
+
+/* ---------- Méthodes ---------- */
+.mlist{display:flex;flex-direction:column}
+.mrow{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(0,1.5fr) minmax(0,1.3fr);gap:6px 16px;padding:12px 0;border-top:1px solid var(--line);align-items:center}
+.mrow:first-child{border-top:0}
+.mrow.off .mname b{color:var(--muted)}
+.mname b{display:block;font-size:16px}
+.mname .chips{margin-top:5px}
+.mreq{font-size:12px;padding:3px 7px;border-radius:99px;background:var(--surface-2);color:var(--muted);font-weight:600;white-space:nowrap}
+.mreq.ok{color:var(--money)}
+.mpay{font-size:13px}
+.mrate .meter{margin-top:5px}
+.mrate b{font-variant-numeric:tabular-nums}
+@media (max-width:720px){.mrow{grid-template-columns:1fr}}
+.ptable{width:100%;border-collapse:collapse;font-size:14px;min-width:560px}
+.ptable th{text-align:left;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);font-weight:600;padding:6px 8px;border-bottom:1px solid var(--line)}
+.ptable td{padding:9px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+.ptable td.n{font-variant-numeric:tabular-nums;white-space:nowrap}
+.ptable tr.off td{color:var(--muted)}
+.scroll-x{overflow-x:auto}
+
+/* ---------- Chronos ---------- */
+.timers{display:flex;flex-direction:column;gap:10px}
+.timer{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:6px 12px;align-items:center;padding:12px;border-radius:8px;background:var(--surface-2)}
+.timer .t-label{font-weight:600}
+.timer .t-left{font-family:var(--font-display);font-weight:800;font-size:30px;line-height:1;font-variant-numeric:tabular-nums}
+.timer.ready{background:var(--accent-soft)}
+.timer.ready .t-left{color:var(--accent)}
+.timer .meter{grid-column:1/-1}
+.timer .row{grid-column:1/-1}
+.presets{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.preset{appearance:none;text-align:left;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:8px;padding:10px 12px;cursor:pointer;font:500 14px/1.3 var(--font-body)}
+.preset:hover{border-color:var(--accent)}
+.preset b{display:block;font-family:var(--font-display);font-size:20px;font-weight:800}
+
+/* ---------- Journal ---------- */
+.tiles{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+@media (max-width:760px){.tiles{grid-template-columns:1fr 1fr}}
+.tile{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;min-width:0}
+.tile b{display:block;font-family:var(--font-display);font-weight:800;font-size:28px;line-height:1.1;color:var(--money);font-variant-numeric:tabular-nums;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chart{position:relative}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart .axis{fill:var(--muted);font:500 11px var(--font-body)}
+.chart .grid-l{stroke:var(--line);stroke-width:1}
+.chart .bar-m{fill:var(--money)}
+.chart .hit{fill:transparent;cursor:pointer}
+.chart .bar-m.on{opacity:.75}
+.chart .vlabel{fill:var(--fg);font:700 12px var(--font-body)}
+.pop{position:absolute;pointer-events:none;background:var(--pop-bg);color:var(--pop-fg);font-size:13px;padding:6px 9px;border-radius:6px;white-space:nowrap;transform:translate(-50%,-110%);z-index:2}
+.entries{display:flex;flex-direction:column}
+.entry{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;padding:8px 0;border-top:1px solid var(--line)}
+.entry:first-child{border-top:0}
+.entry .src{font-weight:600}
+.entry .d{font-size:12px;color:var(--muted)}
+.entry .money.neg{color:var(--warn)}
+.icon-btn{appearance:none;border:0;background:none;color:var(--muted);cursor:pointer;font-size:18px;line-height:1;padding:6px 8px;border-radius:6px}
+.icon-btn:hover{color:var(--fg);background:var(--surface-2)}
+
+footer{border-top:1px solid var(--line);padding-block:18px 28px;color:var(--muted);font-size:13px}
+footer p{max-width:80ch;margin:0 0 6px}
+@media (prefers-reduced-motion: reduce){*{transition:none!important;animation:none!important}}
+</style>
+</head>
+<body>
+
+<div class="shell-head">
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand"><b>QG Los Santos</b><span class="sync ok" id="sync"><i></i><span>Enregistré sur cet appareil</span></span></div>
+      <div class="cashpill" aria-live="polite"><span>Solde</span><b id="top-cash">0 $</b></div>
+    </div>
+    <nav class="tabs" id="tabs" aria-label="Sections">
+      <button class="tab" data-tab="tableau">Tableau de bord</button>
+      <button class="tab" data-tab="routines">Routines</button>
+      <button class="tab" data-tab="empire">Mon empire</button>
+      <button class="tab" data-tab="achats">Achats</button>
+      <button class="tab" data-tab="methodes">Méthodes</button>
+      <button class="tab" data-tab="chronos">Chronos</button>
+      <button class="tab" data-tab="journal">Journal</button>
+    </nav>
+  </div>
+</div>
+
+<main class="wrap" id="view" tabindex="-1"></main>
+
+<footer class="wrap">
+  <p>Valeurs approximatives compilées le 23 novembre 2026 à partir de guides publics, à jour du patch 1.73 (The Kortz Center Heist, juillet 2026). Les gains réels varient selon la difficulté, tes cibles, les bonus et ta vitesse.</p>
+  <p>Les bonus changent chaque jeudi : vérifie-les sur le <a href="https://www.rockstargames.com/newswire" target="_blank" rel="noopener">Newswire de Rockstar</a>. Outil perso non officiel, sans lien avec Rockstar Games.</p>
+  <p>Tes données restent dans ce navigateur, sur cet appareil. Exporte-les de temps en temps (Mon empire, Sauvegarde et transfert).</p>
+</footer>
+
+<script>
+(function(){
+'use strict';
+
+/* ======================================================================
+   DONNÉES DE JEU — approximatives (patch 1.73, juillet 2026)
+   ====================================================================== */
+const CATS = [
+  {id:'braquage', name:'Braquages & contrats', desc:'Ce qui rapporte le plus quand tu joues activement.'},
+  {id:'passif', name:'Business passifs', desc:'Ils produisent pendant que tu fais autre chose, tant que tu es connecté.'},
+  {id:'facade', name:'Façades (Money Fronts)', desc:'Blanchiment d’argent et bonus sur tes autres business.'},
+  {id:'pdg', name:'PDG & contrebande', desc:'Anciens business, utiles surtout en complément.'},
+  {id:'vehicule', name:'Véhicules utiles', desc:'Pour aller plus vite, pas pour frimer.'}
+];
+
+const PROPS = [
+  {id:'kosatka', cat:'braquage', name:'Kosatka', price:2200000, what:'Débloque le braquage de Cayo Perico, faisable en solo.'},
+  {id:'sparrow', cat:'braquage', parent:'kosatka', name:'Sparrow (amélioration du Kosatka)', price:1815000, approx:true, what:'Hélico qui apparaît à côté de toi : repérage et préparations de Cayo bien plus rapides.'},
+  {id:'agency', cat:'braquage', name:'Agence', price:2010000, from:true, what:'Contrat Dr. Dre, contrats de sécurité, Payphone Hits et un coffre passif.'},
+  {id:'mckenzie', cat:'braquage', name:'Hangar de McKenzie Field', price:1475000, what:'The Titan Job (Oscar Guzman Flies Again), jouable en solo.'},
+  {id:'autoshop', cat:'braquage', name:'Garage auto (Auto Shop)', price:1670000, from:true, what:'Contrats de braquage et Exotic Exports quotidiens.'},
+  {id:'salvage', cat:'braquage', name:'Casse (Salvage Yard)', price:1450000, from:true, approx:true, what:'3 braquages de véhicules par semaine, remorquage et un coffre.'},
+  {id:'garment', cat:'braquage', name:'Usine de vêtements', price:2350000, what:'Dossiers du FIB.'},
+  {id:'bailoffice', cat:'braquage', name:'Bureau de caution', price:1650000, approx:true, what:'Primes sur des fugitifs, 100 % solo.'},
+  {id:'arcade', cat:'braquage', name:'Salle d’arcade', price:1235000, from:true, approx:true, what:'Casse du Diamond Casino (2 joueurs minimum) et un coffre.'},
+  {id:'facility', cat:'braquage', name:'Installation (Facility)', price:1250000, from:true, approx:true, what:'Braquage de la fin du monde (Doomsday), en groupe.'},
+  {id:'apartment', cat:'braquage', name:'Appartement haut de gamme', price:200000, from:true, approx:true, what:'Braquages originaux (Fleeca, Pacific Standard…), en groupe.'},
+  {id:'mansion', cat:'braquage', name:'Manoir', price:11500000, from:true, what:'Propriété de luxe, nécessaire pour l’atelier d’art.'},
+  {id:'artstudio', cat:'braquage', parent:'mansion', name:'Atelier d’art (Art Studio)', price:4700000, what:'Débloque le Kortz Center Heist (été 2026, solo possible).'},
+
+  {id:'firstdose', cat:'passif', name:'Missions First Dose terminées', price:0, what:'6 missions gratuites : elles débloquent le labo d’acide et offrent le Brickade 6x6.'},
+  {id:'acidlab', cat:'passif', parent:'firstdose', name:'Labo d’acide', price:750000, what:'Le meilleur business passif pas cher, jouable en session privée.'},
+  {id:'acidupg', cat:'passif', parent:'acidlab', name:'Amélioration d’équipement (labo d’acide)', price:250000, what:'Débloquée après 10 Fooligan Jobs. Stock plein ≈ 335 k$ au lieu de ≈ 238 k$.'},
+  {id:'nightclub', cat:'passif', name:'Boîte de nuit', price:1080000, from:true, approx:true, what:'Entrepôt alimenté par tes autres business, plus un coffre de popularité.'},
+  {id:'nctech', cat:'passif', parent:'nightclub', name:'Techniciens d’entrepôt (5)', price:880000, approx:true, what:'Un technicien par marchandise. Sans eux, l’entrepôt ne produit rien.'},
+  {id:'ncequip', cat:'passif', parent:'nightclub', name:'Amélioration d’équipement (boîte de nuit)', price:1425000, approx:true, what:'Accélère la production de l’entrepôt.'},
+  {id:'bunker', cat:'passif', name:'Bunker', price:1165000, from:true, approx:true, what:'Armes en production passive. Chumash (≈ 1,65 M$) rend les ventes plus courtes.'},
+  {id:'bunkerupg', cat:'passif', parent:'bunker', name:'Améliorations équipement + personnel', price:1753500, what:'Indispensables : production plus rapide et stock plus cher.'},
+  {id:'clubhouse', cat:'passif', name:'Club-house de MC', price:200000, from:true, what:'Donne accès aux business de motards.'},
+  {id:'coke', cat:'passif', parent:'clubhouse', name:'Labo de cocaïne', price:975000, from:true, approx:true, what:'Le meilleur business MC (≈ 525 k$ par stock plein, amélioré).'},
+  {id:'meth', cat:'passif', parent:'clubhouse', name:'Labo de meth', price:910000, from:true, approx:true, what:'Correct, mais moins intéressant que le labo d’acide.'},
+  {id:'cash', cat:'passif', parent:'clubhouse', name:'Fabrique de faux billets', price:845000, from:true, approx:true, what:'+35 % avec le Hands On Car Wash.'},
+  {id:'weed', cat:'passif', parent:'clubhouse', name:'Ferme de cannabis', price:715000, from:true, approx:true, what:'+35 % avec Smoke on the Water.'},
+  {id:'docs', cat:'passif', parent:'clubhouse', name:'Faussaire (faux papiers)', price:650000, from:true, approx:true, what:'Le moins rentable. Utile seulement pour alimenter la boîte de nuit.'},
+
+  {id:'carwash', cat:'facade', name:'Hands On Car Wash', price:1000000, approx:true, what:'Blanchiment, missions de Mr. Faber payées tout de suite, +35 % sur les faux billets. Requis pour les deux autres façades.'},
+  {id:'weedshop', cat:'facade', parent:'carwash', name:'Smoke on the Water', price:850000, what:'+35 % sur la ferme de cannabis.'},
+  {id:'helitours', cat:'facade', parent:'carwash', name:'Higgins Helitours', price:900000, what:'+10 % sur le fret aérien du hangar.'},
+
+  {id:'ceo', cat:'pdg', name:'Bureau de PDG', price:1000000, from:true, what:'Nécessaire pour les entrepôts de marchandises et de véhicules.'},
+  {id:'cargo', cat:'pdg', parent:'ceo', name:'Entrepôt de marchandises (grand)', price:1900000, approx:true, what:'111 caisses ≈ 2,2 M$, mais très long à remplir en solo.'},
+  {id:'vehiclewh', cat:'pdg', parent:'ceo', name:'Entrepôt de véhicules', price:1500000, from:true, approx:true, what:'Import/Export : ≈ 80 k$ net par voiture haut de gamme.'},
+  {id:'hangar', cat:'pdg', name:'Hangar (contrebande aérienne)', price:1200000, from:true, approx:true, what:'Fret aérien. Long à approvisionner.'},
+
+  {id:'terrorbyte', cat:'vehicule', name:'Terrorbyte', price:1375000, approx:true, what:'Missions clients pour la boîte de nuit et atelier de l’Oppressor Mk II.'},
+  {id:'oppressor', cat:'vehicule', name:'Oppressor Mk II', price:8000000, approx:true, what:'La moto volante : gros gain de temps sur les ventes et les trajets.'},
+  {id:'kuruma', cat:'vehicule', name:'Kuruma blindée', price:525000, approx:true, what:'Pour les missions de contact (≈ 698 k$ avant d’avoir fait le Fleeca Job).'},
+  {id:'buzzard', cat:'vehicule', name:'Buzzard', price:1750000, what:'Hélico armé. En VIP ou PDG, tu peux aussi l’appeler pour 25 k$.'}
+];
+const PROP = Object.fromEntries(PROPS.map(p => [p.id, p]));
+
+const ACTS = [
+  {id:'kortz', name:'Kortz Center Heist', req:['artstudio'], solo:true, dur:95, pay:400000, first:1700000, once:true,
+   payTxt:'≈ 300–480 k$ · 1er run de la semaine ≈ 1,2–1,9 M$', cd:0, cdTxt:'1 fois par session', weekly:'w_kortz',
+   tip:'Le 1er run de la semaine vend la cible principale ×4 : ne le rate jamais.'},
+  {id:'dre', name:'Contrat Dr. Dre', req:['agency'], solo:true, dur:80, pay:900000, first:1099800,
+   payTxt:'900 k$ · 1er run de la semaine 1,1 M$', cd:48, cdTxt:'≈ 48–60 min', weekly:'w_dre',
+   tip:'Il faut avoir terminé un contrat de sécurité avant. Tout se lance depuis l’ordinateur de l’agence.'},
+  {id:'cayo', name:'Braquage de Cayo Perico', req:['kosatka'], solo:true, dur:85, durFast:60, fastReq:'sparrow', pay:700000,
+   payTxt:'≈ 0,55–1,1 M$ selon la cible', cd:144, cdTxt:'144 min en solo',
+   tip:'Entre par le tunnel de drainage et prends l’or en priorité dans les secondaires. Les cibles principales changent chaque semaine.'},
+  {id:'titan', name:'The Titan Job', req:['mckenzie'], solo:true, dur:60, pay:500000, first:750000,
+   payTxt:'500 k$ normal · 750 k$ difficile · 1er run de la semaine 750 k$ / 1,125 M$', cd:60, cdTxt:'≈ 1 h', weekly:'w_titan',
+   tip:'Passe en difficile dès que tu peux : +50 %.'},
+  {id:'cluckin', name:'Cluckin’ Bell Farm Raid', req:[], solo:true, dur:50, pay:400000, first:600000,
+   payTxt:'400 k$ · 1er run de la semaine 600 k$', cd:60, cdTxt:'≈ 1 h', weekly:'w_cluckin',
+   tip:'Gratuit : il se lance via un appel de Vincent Effenburger.'},
+  {id:'knoway', name:'KnoWay Out (A Clean Break)', req:[], solo:true, dur:30, pay:245000, first:455700, once:true,
+   payTxt:'245 k$ normal / 368 k$ difficile · 1er run de la semaine 456 k$ / 684 k$', cd:0, cdTxt:'—', weekly:'w_knoway',
+   tip:'Gratuit : téléphone public de Little Seoul. Tente le difficile pour +50 %.'},
+  {id:'salvage', name:'Braquage de la casse', req:['salvage'], solo:true, dur:40, pay:250000, cap:3,
+   payTxt:'≈ 200–400 k$ (valeur du véhicule)', cd:0, cdTxt:'3 par semaine',
+   tip:'Démonte le véhicule plutôt que de le garder : tu touches ≈ 80 % de sa valeur max.'},
+  {id:'autoshop', name:'Contrat du garage auto', req:['autoshop'], solo:true, dur:40, pay:175000,
+   payTxt:'≈ 170–185 k$ · Union Depository ≈ 300 k$', cd:0, cdTxt:'3 contrats au tableau',
+   tip:'Le contrat Union Depository est le plus payant.'},
+  {id:'fib', name:'Dossier du FIB', req:['garment'], solo:true, dur:45, pay:170000,
+   payTxt:'≈ 150–300 k$ (dossier prioritaire)', cd:0, cdTxt:'—'},
+  {id:'payphone', name:'Payphone Hit', req:['agency'], solo:true, dur:12, pay:55000,
+   payTxt:'≈ 45–85 k$ avec le bonus d’assassinat', cd:10, cdTxt:'≈ 10 min',
+   tip:'Respecte la méthode imposée pour toucher le bonus.'},
+  {id:'bail', name:'Prime du bureau de caution', req:['bailoffice'], solo:true, dur:18, pay:55000,
+   payTxt:'≈ 35–75 k$', cd:0, cdTxt:'—'},
+  {id:'vehcargo', name:'Export de véhicule', req:['ceo','vehiclewh'], solo:true, dur:20, pay:80000,
+   payTxt:'≈ 80 k$ net (haut de gamme)', cd:20, cdTxt:'≈ 20–50 min'},
+  {id:'security', name:'Contrat de sécurité', req:['agency'], solo:true, dur:12, pay:45000,
+   payTxt:'≈ 30–70 k$', cd:0, cdTxt:'—'},
+  {id:'vip', name:'Travail VIP (Headhunter, Sightseer)', req:[], solo:true, dur:10, pay:25000,
+   payTxt:'≈ 20–30 k$', cd:5, cdTxt:'5–10 min', tip:'Il faut 50 k$ en banque pour devenir VIP.'},
+  {id:'casino', name:'Casse du Diamond Casino', req:['arcade'], solo:false, dur:150, pay:700000,
+   payTxt:'Ta part ≈ 0,5–1 M$ selon le groupe · bonus de 1re finale hebdo', cd:0, cdTxt:'—', weekly:'w_casino'},
+  {id:'doomsday', name:'Fin du monde, acte III', req:['facility'], solo:false, dur:120, pay:550000,
+   payTxt:'Ta part ≈ 0,4–0,8 M$ · bonus de 1er run hebdo', cd:0, cdTxt:'—', weekly:'w_doomsday'},
+  {id:'original', name:'Braquages originaux', req:['apartment'], solo:false, dur:90, pay:300000,
+   payTxt:'Ta part ≈ 0,2–0,5 M$ · bonus de 1er run hebdo pour chacun', cd:0, cdTxt:'—', weekly:'w_original'}
+];
+const ACT = Object.fromEntries(ACTS.map(a => [a.id, a]));
+
+const PASSIVE = [
+  {req:'acidlab', name:'Labo d’acide', full:'≈ 335 k$ (amélioré)', low:36000, high:95000, note:'Vente rapide en Brickade, ou à petites doses aux dealers de rue.'},
+  {req:'nightclub', name:'Boîte de nuit, entrepôt', full:'≈ 1,8 M$', low:27500, high:50000, note:'≈ 67 h pour tout remplir avec 5 techniciens. Une seule vente.'},
+  {req:'nightclub', name:'Boîte de nuit, coffre', full:'250 k$ max', low:20000, high:62500, note:'Jusqu’à 50 k$ par jour de jeu (48 min) avec la popularité au max.'},
+  {req:'bunker', name:'Bunker', full:'≈ 1,05 M$', low:57700, high:60000, note:'En solo, vends par petites quantités (≈ 175 k$ par véhicule).'},
+  {req:'coke', name:'Labo de cocaïne', full:'≈ 525 k$', low:67500, high:74000, note:'Ventes de 3 unités ou moins en solo.'},
+  {req:'meth', name:'Labo de meth', full:'≈ 446 k$', low:43000, high:51000, note:''},
+  {req:'cash', name:'Faux billets', full:'≈ 368 k$', low:40800, high:48000, note:'+35 % avec le Car Wash.'},
+  {req:'weed', name:'Cannabis', full:'≈ 315 k$', low:36500, high:36500, note:'+35 % avec Smoke on the Water.'},
+  {req:'docs', name:'Faux papiers', full:'≈ 158 k$', low:22500, high:22500, note:'Le moins rentable.'},
+  {req:'agency', name:'Coffre de l’agence', full:'250 k$ max', low:0, high:0, note:'Rapporte plus à mesure que tu termines des contrats de sécurité.'},
+  {req:'carwash', name:'Car Wash, blanchiment', full:'—', low:15000, high:37500, note:'≈ 30 k$ par jour de jeu si tu as beaucoup de business. Surveille la jauge de soupçon.'}
+];
+
+const ROADMAP = [
+  {id:'free', title:'Les gratuits d’abord', props:['firstdose'],
+   why:'Avant de dépenser quoi que ce soit : Cluckin’ Bell Farm Raid et KnoWay Out ne demandent aucune propriété et paient 600 k$ et 456 k$ au 1er run de chaque semaine. Fais aussi les 6 missions First Dose : elles débloquent le labo d’acide et t’offrent le Brickade 6x6.',
+   unlocks:'≈ 1 M$ par semaine sans rien acheter'},
+  {id:'acid', title:'Labo d’acide + amélioration', props:['acidlab','acidupg'],
+   why:'Le business le moins cher, rentable en solo et en session privée. Fais 10 Fooligan Jobs pour débloquer l’amélioration, qui augmente nettement la valeur du stock.',
+   unlocks:'≈ 335 k$ par stock plein'},
+  {id:'agency', title:'Agence', props:['agency'],
+   why:'Le contrat Dr. Dre paie ≈ 1,1 M$ au 1er run de la semaine puis 900 k$. Les Payphone Hits remplissent les temps morts et le coffre se remplit tout seul.',
+   unlocks:'Contrat Dr. Dre, Payphone Hits'},
+  {id:'kosatka', title:'Kosatka', props:['kosatka'],
+   why:'Cayo Perico reste le braquage solo de référence malgré la baisse de juillet 2026. Alterne-le avec Dr. Dre pendant ses 144 min de recharge.',
+   unlocks:'≈ 0,55–1,1 M$ par braquage'},
+  {id:'mckenzie', title:'Hangar de McKenzie Field', props:['mckenzie'],
+   why:'Le moins cher des braquages : 750 k$ en normal ou 1,125 M$ en difficile au 1er run de la semaine. Remboursé en moins de deux semaines.',
+   unlocks:'The Titan Job'},
+  {id:'sparrow', title:'Sparrow pour le Kosatka', props:['sparrow'],
+   why:'Tu gagnes 20 à 30 minutes sur chaque Cayo. Sur un mois, c’est l’achat de confort le plus rentable.',
+   unlocks:'Cayo en ≈ 1 h au lieu de ≈ 1 h 30'},
+  {id:'autoshop', title:'Garage auto', props:['autoshop'],
+   why:'Des contrats courts et solo entre deux recharges, plus les Exotic Exports chaque jour.',
+   unlocks:'≈ 170–300 k$ par contrat'},
+  {id:'salvage', title:'Casse (Salvage Yard)', props:['salvage'],
+   why:'3 braquages de véhicules par semaine, un coffre et le remorquage.',
+   unlocks:'≈ 600 k$ – 1 M$ par semaine'},
+  {id:'bunker', title:'Bunker (Chumash) + améliorations', props:['bunker','bunkerupg'],
+   why:'Une production passive fiable pendant tes braquages. Il alimente aussi la boîte de nuit.',
+   unlocks:'≈ 1 M$ par stock plein'},
+  {id:'nightclub', title:'Boîte de nuit + techniciens', props:['nightclub','nctech'],
+   why:'Seulement maintenant : elle revend ce que produisent tes autres business, sans réapprovisionnement.',
+   unlocks:'≈ 1,8 M$ par entrepôt plein'},
+  {id:'coke', title:'Club-house + labo de cocaïne', props:['clubhouse','coke'],
+   why:'Un fournisseur de plus pour la boîte de nuit, et des ventes rapides via les dealers de rue.',
+   unlocks:'≈ 525 k$ par stock plein'},
+  {id:'carwash', title:'Hands On Car Wash', props:['carwash'],
+   why:'Blanchiment, missions payées tout de suite et coffre. Rentable surtout quand tu possèdes déjà beaucoup de business.',
+   unlocks:'≈ 30 k$ par jour de jeu'},
+  {id:'oppressor', title:'Terrorbyte + Oppressor Mk II', props:['terrorbyte','oppressor'],
+   why:'Pas rentable en soi, mais tu gagnes du temps sur tout. À prendre quand ta routine tourne déjà.',
+   unlocks:'Trajets et ventes plus rapides'},
+  {id:'mansion', title:'Manoir + atelier d’art', props:['mansion','artstudio'],
+   why:'L’objectif de fin de partie : le Kortz Center Heist paie ≈ 1,2–1,9 M$ au 1er run de la semaine. Très cher (≈ 16,2 M$), garde-le pour quand tout le reste tourne.',
+   unlocks:'Kortz Center Heist'}
+];
+const ROAD_GROUP = {id:'arcade', title:'Salle d’arcade (tu joues en groupe)', props:['arcade'],
+  why:'Le casse du Diamond Casino demande au moins 2 joueurs, mais reste un des plus rentables à plusieurs.',
+  unlocks:'Casse du Diamond Casino'};
+
+const AVOID = [
+  ['Un entrepôt de marchandises PDG en premier achat', 'Lent et pénible en solo. C’est l’erreur de débutant classique.'],
+  ['La boîte de nuit trop tôt', 'Sans business pour l’alimenter, elle ne rapporte presque rien.'],
+  ['Le faussaire (faux papiers)', 'Le business le moins rentable du jeu.'],
+  ['Le bunker de Paleto', 'Moins cher à l’achat, mais chaque vente est plus longue.'],
+  ['Décoration, chambres, garages en plus', 'Aucun rendement. Ça peut attendre.'],
+  ['Les supercars avant d’avoir 3 sources de revenus', 'Elles ne rapportent rien et retardent tout le reste.'],
+  ['Vendre en session publique sans protection', 'Un autre joueur peut détruire ta marchandise. Passe en session privée.']
+];
+
+const RULES = [
+  'Joue en session privée (sur invitation) pour vendre tranquille.',
+  'Fais d’abord les bonus de 1re réalisation de la semaine : c’est l’argent le plus rapide du jeu.',
+  'Lis les bonus du jeudi : un 2× sur un business change tes priorités de la semaine.',
+  'Achète en promo si ce n’est pas urgent : les propriétés passent souvent à −30 à −50 %.',
+  'Reste connecté : tes business ne produisent que quand tu es en ligne.',
+  'Remplis les temps de recharge avec des activités courtes (Payphone Hits, contrats, travail VIP).'
+];
+
+const PRESETS = [
+  {act:'cayo', label:'Recharge Cayo Perico (solo)', min:144, req:['kosatka']},
+  {act:'dre', label:'Recharge contrat Dr. Dre', min:48, req:['agency']},
+  {act:'titan', label:'Recharge Titan Job', min:60, req:['mckenzie']},
+  {act:'cluckin', label:'Recharge Cluckin’ Bell', min:60, req:[]},
+  {act:'payphone', label:'Prochain Payphone Hit', min:10, req:['agency']},
+  {act:'vehcargo', label:'Recharge export de véhicule', min:20, req:['vehiclewh']},
+  {act:null, label:'Coffre de la boîte de nuit (1 jour de jeu)', min:48, req:['nightclub']},
+  {act:null, label:'Un jour de jeu (48 min)', min:48, req:[]}
+];
+
+/* Bonus de la semaine en cours — sources : guides tiers, à confirmer sur le Newswire */
+const EVENT = {
+  start: Date.UTC(2026,10,19,10), end: Date.UTC(2026,10,26,10),
+  label: 'Du jeudi 19 au jeudi 26 novembre 2026',
+  items: [
+    '4× GTA$ et RP sur les défis Freemode',
+    '3× sur la série Stunt Race',
+    '2× sur les missions de contact (4× avec GTA+), jusqu’au 2 décembre',
+    'Défi hebdomadaire : 3 missions Gerald’s Last Play = 100 000 $',
+    '−30 % sur 11 véhicules, dont la Vapid Dominator GTX'
+  ],
+  challenge: '3 missions Gerald’s Last Play'
+};
+
+/* ======================================================================
+   OUTILS
+   ====================================================================== */
+const NF = new Intl.NumberFormat('fr-FR');
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function fmt(n){ return NF.format(Math.round(n)) + ' $'; }
+function short(n){
+  const a = Math.abs(n), s = n < 0 ? '−' : '';
+  if (a >= 1e6) return s + (a/1e6).toLocaleString('fr-FR',{maximumFractionDigits: a >= 1e7 ? 1 : 2}) + ' M$';
+  if (a >= 1e3) return s + Math.round(a/1e3) + ' k$';
+  return s + Math.round(a) + ' $';
+}
+function dmin(min){
+  min = Math.max(0, Math.round(min));
+  const h = Math.floor(min/60), m = min % 60;
+  if (!h) return m + ' min';
+  return h + ' h' + (m ? ' ' + String(m).padStart(2,'0') : '');
+}
+function until(ms){
+  if (ms <= 0) return 'maintenant';
+  const s = Math.floor(ms/1000), d = Math.floor(s/86400), h = Math.floor(s%86400/3600), m = Math.floor(s%3600/60);
+  if (d) return d + ' j ' + h + ' h';
+  if (h) return h + ' h ' + String(m).padStart(2,'0');
+  return Math.max(1, m) + ' min';
+}
+function clock(ms){
+  if (ms <= 0) return 'Prêt';
+  const s = Math.ceil(ms/1000), h = Math.floor(s/3600), m = Math.floor(s%3600/60), sec = s%60;
+  return (h ? h + ':' + String(m).padStart(2,'0') : m) + ':' + String(sec).padStart(2,'0');
+}
+function hhmm(d){ return d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'}); }
+function parseAmount(raw){
+  let s = String(raw).trim().toLowerCase().replace(/[\s  $]/g,'');
+  let sign = 1;
+  if (/^[-−]/.test(s)) { sign = -1; s = s.slice(1); }
+  let mult = 1;
+  if (/m$/.test(s)) { mult = 1e6; s = s.slice(0,-1); }
+  else if (/k$/.test(s)) { mult = 1e3; s = s.slice(0,-1); }
+  const seps = (s.match(/[.,]/g) || []).length;
+  if (seps > 1 || (mult === 1 && /^\d+[.,]\d{3}$/.test(s))) s = s.replace(/[.,]/g,'');
+  else s = s.replace(',', '.');
+  if (!/^\d+(\.\d+)?$/.test(s)) return NaN;
+  return sign * Math.round(parseFloat(s) * mult);
+}
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function clone(o){ return JSON.parse(JSON.stringify(o)); }
+
+/* Reset hebdo : jeudi 10:00 heure de Londres (≈ 11:00 à Paris) */
+function londonParts(d){
+  const f = new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/London',year:'numeric',month:'2-digit',day:'2-digit',hour:'2-digit',minute:'2-digit',hour12:false,weekday:'short'});
+  const p = {}; f.formatToParts(d).forEach(x => { p[x.type] = x.value; });
+  return p;
+}
+function weekInfo(now){
+  const p = londonParts(now);
+  const dows = {Mon:1,Tue:2,Wed:3,Thu:4,Fri:5,Sat:6,Sun:7};
+  const dow = dows[p.weekday] || 1;
+  let hour = +p.hour; if (hour === 24) hour = 0;
+  let back = (dow - 4 + 7) % 7;
+  if (back === 0 && hour < 10) back = 7;
+  const thu = new Date(Date.UTC(+p.year, +p.month-1, +p.day) - back*864e5);
+  const key = thu.toISOString().slice(0,10);
+  const offsetH = Math.round((Date.UTC(+p.year,+p.month-1,+p.day,hour,+p.minute) - Math.floor(now.getTime()/60000)*60000) / 36e5);
+  const start = Date.UTC(thu.getUTCFullYear(), thu.getUTCMonth(), thu.getUTCDate(), 10) - offsetH*36e5;
+  return {key, start, next: start + 7*864e5};
+}
+function dayInfo(now){
+  const key = now.toISOString().slice(0,10);
+  const next = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()+1);
+  return {key, next};
+}
+function localDayKey(t){ const d = new Date(t); return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0'); }
+
+/* ======================================================================
+   ÉTAT + SAUVEGARDE (base privée du compte, sinon cet appareil)
+   ====================================================================== */
+const LS_KEY = 'qg-ls-state-v1', UI_KEY = 'qg-ls-ui-v1';
+function defaults(){
+  return {v:1, settings:{platform:'ps5', gtaplus:false, mode:'solo', pace:'normal', deduct:true, addCash:true},
+    cash:0, owned:{}, daily:{key:'',done:{}}, weekly:{key:'',done:{},salvage:0}, monthly:{key:'',done:{}},
+    timers:[], log:[], notes:'', updated:0};
+}
+function migrate(s){
+  const d = defaults();
+  if (!s || typeof s !== 'object') return d;
+  const o = Object.assign(d, s);
+  o.settings = Object.assign(defaults().settings, s.settings || {});
+  o.owned = Object.assign({}, s.owned || {});
+  o.daily = Object.assign({key:'',done:{}}, s.daily || {}); o.daily.done = Object.assign({}, o.daily.done || {});
+  o.weekly = Object.assign({key:'',done:{},salvage:0}, s.weekly || {}); o.weekly.done = Object.assign({}, o.weekly.done || {});
+  o.monthly = Object.assign({key:'',done:{}}, s.monthly || {}); o.monthly.done = Object.assign({}, o.monthly.done || {});
+  o.timers = Array.isArray(s.timers) ? s.timers.filter(t => t && t.id && t.end) : [];
+  o.log = Array.isArray(s.log) ? s.log.filter(e => e && e.id && isFinite(e.amount)) : [];
+  o.cash = isFinite(+s.cash) ? +s.cash : 0;
+  return o;
+}
+function loadLS(key){ try { const v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch(e){ return null; } }
+function saveLS(key, v){ try { localStorage.setItem(key, JSON.stringify(v)); } catch(e){} }
+
+let state = migrate(loadLS(LS_KEY));
+const ui = Object.assign({budget:120, filter:'mine', introHidden:false, sound:false, completing:null}, loadLS(UI_KEY) || {});
+ui.completing = null;
+function saveUI(){ saveLS(UI_KEY, {budget:ui.budget, filter:ui.filter, introHidden:ui.introHidden, sound:ui.sound}); }
+
+function setSync(kind, text){
+  const el = document.getElementById('sync'); if (!el) return;
+  el.className = 'sync ' + kind;
+  el.querySelector('span').textContent = text;
+}
+function persist(){
+  state.updated = Date.now();
+  const cutoff = Date.now() - 864e5;
+  state.timers = state.timers.filter(t => t.end > cutoff);
+  if (state.log.length > 600) state.log = state.log.slice(-600);
+  try { localStorage.setItem(LS_KEY, JSON.stringify(state)); setSync('ok', 'Enregistré sur cet appareil'); }
+  catch(e){ setSync('err', 'Impossible d’enregistrer (navigation privée ?)'); }
+}
+function commit(){ persist(); render(); }
+async function askPersistence(){
+  try { if (navigator.storage && navigator.storage.persist && !(await navigator.storage.persisted())) await navigator.storage.persist(); } catch(e){}
+}
+
+/* ---------- Sauvegarde et transfert entre appareils ---------- */
+function bytesToB64(b){ let s = ''; for (let i = 0; i < b.length; i += 0x8000) s += String.fromCharCode.apply(null, b.subarray(i, i + 0x8000)); return btoa(s); }
+function b64ToBytes(s){ const bin = atob(s); const b = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) b[i] = bin.charCodeAt(i); return b; }
+async function encodeState(){
+  const json = JSON.stringify(state);
+  try {
+    if (window.CompressionStream){
+      const stream = new Blob([json]).stream().pipeThrough(new CompressionStream('gzip'));
+      return 'QG1:' + bytesToB64(new Uint8Array(await new Response(stream).arrayBuffer()));
+    }
+  } catch(e){}
+  return 'QG0:' + bytesToB64(new TextEncoder().encode(json));
+}
+async function decodeCode(code){
+  code = code.trim().replace(/\s+/g, '');
+  if (code.startsWith('{')) return JSON.parse(code);
+  const m = /^QG([01]):(.+)$/.exec(code); if (!m) throw new Error('format');
+  const bytes = b64ToBytes(m[2]);
+  if (m[1] === '1'){
+    const stream = new Blob([bytes]).stream().pipeThrough(new DecompressionStream('gzip'));
+    return JSON.parse(await new Response(stream).text());
+  }
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+function importState(obj){
+  if (!obj || typeof obj !== 'object' || !obj.settings || !obj.owned) throw new Error('contenu');
+  state = migrate(obj);
+  notified.clear(); state.timers.filter(t => t.end <= Date.now()).forEach(t => notified.add(t.id));
+  commit();
+}
+
+/* ======================================================================
+   LOGIQUE
+   ====================================================================== */
+const own = id => !!state.owned[id];
+function available(a){ return a.req.every(own) && (a.solo || state.settings.mode === 'groupe'); }
+function periods(){
+  const now = new Date();
+  const d = dayInfo(now), w = weekInfo(now), mk = d.key.slice(0,7);
+  if (state.daily.key !== d.key) state.daily = {key:d.key, done:{}};
+  if (state.weekly.key !== w.key) state.weekly = {key:w.key, done:{}, salvage:0};
+  if (state.monthly.key !== mk) state.monthly = {key:mk, done:{}};
+  return {d, w};
+}
+function eventLive(){ const n = Date.now(); return n >= EVENT.start && n < EVENT.end; }
+
+function dailyItems(){
+  const o = state.owned;
+  const items = [
+    {id:'d_obj', label:'Objectifs quotidiens (les 3)', gainTxt:'≈ 30 k$'},
+    {id:'d_wheel', label:'Roue de la fortune du Casino', gainTxt:'Lot gratuit, voiture du podium possible'},
+    {id:'d_stash', label:'Planque (Stash House)', gainTxt:'≈ 20 k$'},
+    {id:'d_gcache', label:'Cache de G (G’s Cache)', gainTxt:'≈ 15–25 k$'},
+    {id:'d_wreck', label:'Épave du jour (Shipwreck)', gainTxt:'≈ 25 k$'}
+  ];
+  if (o.acidlab || o.coke || o.meth || o.weed) items.push({id:'d_dealers', label:'Dealers de rue (3 positions)', gainTxt:'Écoule ton stock de drogue'});
+  if (o.autoshop) items.push({id:'d_exotic', label:'Exotic Exports (10 véhicules)', gainTxt:'≈ 20 k$ par véhicule'});
+  const safes = [o.nightclub && 'boîte de nuit', o.agency && 'agence', o.arcade && 'arcade', o.salvage && 'casse', o.carwash && 'car wash', o.clubhouse && 'bar du club-house'].filter(Boolean);
+  if (safes.length) items.push({id:'d_safes', label:'Vider les coffres', note:safes.join(', '), gainTxt:'Plafonnés : vide-les avant qu’ils débordent'});
+  const sup = [o.acidlab && 'labo d’acide', o.bunker && 'bunker', o.coke && 'cocaïne', o.meth && 'meth', o.cash && 'faux billets', o.weed && 'cannabis', o.docs && 'faux papiers'].filter(Boolean);
+  if (sup.length) items.push({id:'d_supplies', label:'Réapprovisionner', note:sup.join(', '), gainTxt:'Une production à l’arrêt ne rapporte rien'});
+  if (o.acidlab || o.bunker || o.nightclub || o.coke) items.push({id:'d_sell', label:'Vendre les stocks pleins (session privée)', gainTxt:'Selon tes stocks'});
+  return items;
+}
+function weeklyItems(){
+  const items = [];
+  ACTS.filter(a => a.weekly && available(a)).forEach(a => {
+    items.push({id:a.weekly, label:a.name, note:'1er run de la semaine', gain:a.first || null, gainTxt:a.first ? '' : 'Bonus de 1re réalisation', act:a.id});
+  });
+  if (own('salvage')) items.push({id:'w_salvage', label:'Braquages de la casse', note:'3 par semaine', counter:true, gain:750000});
+  items.push({id:'w_challenge', label:'Défi hebdomadaire', note: eventLive() ? 'Cette semaine : ' + EVENT.challenge : 'Voir le menu de pause, onglet Défis', gain:100000});
+  items.push({id:'w_tt', label:'Contre-la-montre de la semaine', gainTxt:'Jusqu’à ≈ 100 k$'});
+  items.push({id:'w_prize', label:'Défi Prize Ride du LS Car Meet', gainTxt:'Voiture offerte'});
+  items.push({id:'w_news', label:'Lire les bonus du jeudi (Newswire)', gainTxt:'Repère les 2× à 4×'});
+  return items;
+}
+function weeklyDone(it){ return it.counter ? (state.weekly.salvage || 0) >= 3 : !!state.weekly.done[it.id]; }
+function weeklyLeft(){
+  return weeklyItems().reduce((s, it) => {
+    if (it.counter) return s + Math.max(0, 3 - (state.weekly.salvage || 0)) * 250000;
+    return s + (!weeklyDone(it) && it.gain ? it.gain : 0);
+  }, 0);
+}
+function roadmap(){
+  const list = ROADMAP.slice();
+  if (state.settings.mode === 'groupe'){ const i = list.findIndex(s => s.id === 'mckenzie'); list.splice(i+1, 0, ROAD_GROUP); }
+  return list.map(s => {
+    const props = s.props.map(id => PROP[id]);
+    const missing = props.filter(p => !own(p.id));
+    return Object.assign({}, s, {propsObj:props, missing, cost:missing.reduce((a,p) => a + p.price, 0), done:missing.length === 0});
+  });
+}
+function empireValue(){ return PROPS.reduce((s,p) => s + (own(p.id) ? p.price : 0), 0); }
+function passiveLow(){ return PASSIVE.reduce((s,p) => s + (own(p.req) ? p.low : 0), 0); }
+
+function buildPlan(budget){
+  const pace = {debutant:1.35, normal:1, rapide:0.8}[state.settings.pace] || 1;
+  const o = state.owned, now = Date.now();
+  const hasPassive = !!(o.acidlab || o.bunker || o.nightclub || o.coke || o.meth || o.cash || o.weed || o.docs);
+  const steps = [];
+  let t = 0;
+  const openDur = budget <= 30 ? 5 : 10;
+  steps.push({kind:'aux', t, dur:openDur, title:'Mise en route',
+    text: 'Session privée. ' + (o.agency || o.nightclub || o.salvage || o.arcade ? 'Vide les coffres, ' : '') + (hasPassive ? 'relance les productions, ' : '') + 'regarde tes 3 objectifs du jour pour les faire en passant.'});
+  t += openDur;
+  const closeDur = hasPassive && budget > 30 ? 15 : 0;
+  const end = budget - closeDur;
+  const cands = ACTS.filter(available).map(a => {
+    const dur = Math.round(((a.fastReq && o[a.fastReq]) ? a.durFast : a.dur) * pace);
+    const timer = state.timers.find(x => x.act === a.id && x.end > now);
+    return {a, dur, ready: timer ? Math.ceil((timer.end - now)/60000) : 0,
+      firstAvail: !!(a.weekly && a.first && !state.weekly.done[a.weekly]),
+      capLeft: a.cap ? Math.max(0, a.cap - (state.weekly.salvage || 0)) : Infinity, runs:0};
+  });
+  let guard = 0;
+  while (t < end && guard++ < 60){
+    const remaining = end - t;
+    const ok = c => c.capLeft > 0 && !(c.a.once && c.runs > 0);
+    const avail = cands.filter(c => ok(c) && c.ready <= t && c.dur <= remaining);
+    if (!avail.length){
+      const soon = cands.filter(c => ok(c) && c.ready > t && c.ready + c.dur <= end).sort((x,y) => x.ready - y.ready)[0];
+      if (soon){ steps.push({kind:'aux', t, dur:soon.ready - t, title:'Temps mort', text:'Objectifs du jour, cachettes ou ventes en attendant : ' + soon.a.name + '.'}); t = soon.ready; continue; }
+      break;
+    }
+    avail.forEach(c => { c.val = (c.firstAvail ? c.a.first : c.a.pay) / c.dur; });
+    avail.sort((x,y) => y.val - x.val);
+    const c = avail[0];
+    const first = c.firstAvail;
+    steps.push({kind:'act', t, dur:c.dur, act:c.a, gain: first ? c.a.first : c.a.pay, first, n:1});
+    t += c.dur; c.runs++; c.firstAvail = false;
+    if (c.capLeft !== Infinity) c.capLeft--;
+    c.ready = t + (c.a.cd || 0);
+  }
+  if (closeDur) steps.push({kind:'aux', t, dur:closeDur, title:'Ventes et réappro',
+    text:'Vends ce qui est plein, rachète des fournitures et laisse tourner avant de te déconnecter.'});
+  // fusionne les répétitions consécutives d'une même activité
+  const merged = [];
+  steps.forEach(s => {
+    const last = merged[merged.length-1];
+    if (last && s.kind === 'act' && last.kind === 'act' && last.act.id === s.act.id && !s.first && !last.first){
+      last.n += 1; last.dur += s.dur; last.gain += s.gain;
+    } else merged.push(Object.assign({}, s));
+  });
+  const total = merged.reduce((a,s) => a + (s.gain || 0), 0);
+  const minutes = merged.length ? merged[merged.length-1].t + merged[merged.length-1].dur : 0;
+  return {steps:merged, total, minutes};
+}
+function ratePerHour(){
+  const p = buildPlan(120);
+  return p.minutes ? p.total / (p.minutes/60) : 0;
+}
+
+/* ======================================================================
+   RENDU
+   ====================================================================== */
+const view = document.getElementById('view');
+const TABS = ['tableau','routines','empire','achats','methodes','chronos','journal'];
+let current = 'tableau';
+
+function checkRow(kind, it, done){
+  const id = kind + '-' + it.id;
+  const gain = it.gain ? '<span class="money">' + short(it.gain) + '</span>' : esc(it.gainTxt || '');
+  return '<label class="check' + (done ? ' done' : '') + '" for="' + id + '">' +
+    '<input type="checkbox" id="' + id + '" data-check="' + kind + '" data-id="' + it.id + '"' + (done ? ' checked' : '') + '>' +
+    '<span class="body"><span class="label">' + esc(it.label) + '</span>' + (it.note ? '<span class="note">' + esc(it.note) + '</span>' : '') + '</span>' +
+    '<span class="gain">' + gain + '</span></label>';
+}
+function salvageRow(){
+  const n = state.weekly.salvage || 0;
+  return '<div class="check' + (n >= 3 ? ' done' : '') + '"><span class="body"><span class="label">Braquages de la casse</span><span class="note">≈ 250 k$ chacun, 3 par semaine</span></span>' +
+    '<span class="counter"><button class="btn sm" data-act="salvage" data-d="-1" aria-label="Retirer un braquage">−</button><b>' + n + '/3</b><button class="btn sm" data-act="salvage" data-d="1" aria-label="Ajouter un braquage">+</button></span></div>';
+}
+function weeklyList(items){
+  return items.map(it => it.counter ? salvageRow() : checkRow('weekly', it, weeklyDone(it))).join('');
+}
+function monthlyRow(){
+  if (!state.settings.gtaplus) return '';
+  return checkRow('monthly', {id:'m_gtaplus', label:'GTA+ : récupérer les 500 k$ du mois', note:'Et les avantages GTA+ du mois', gain:500000}, !!state.monthly.done.m_gtaplus);
+}
+function resetLine(label, next){ return '<span class="reset">' + label + ' dans <span data-until="' + next + '">' + until(next - Date.now()) + '</span></span>'; }
+
+/* ---------- Tableau de bord ---------- */
+function renderDash(P){
+  const owned = PROPS.filter(p => own(p.id)).length;
+  const R = roadmap();
+  const nextIdx = R.findIndex(s => !s.done);
+  const next = nextIdx >= 0 ? R[nextIdx] : null;
+  const rate = ratePerHour();
+  const wItems = weeklyItems(), wDone = wItems.filter(weeklyDone).length;
+  const dItems = dailyItems(), dDone = dItems.filter(it => state.daily.done[it.id]).length;
+  const now = Date.now();
+  const today = localDayKey(now);
+  const gToday = state.log.filter(e => localDayKey(e.t) === today).reduce((a,e) => a + e.amount, 0);
+  const gWeek = state.log.filter(e => e.t >= P.w.start).reduce((a,e) => a + e.amount, 0);
+  let h = '<div class="view-head"><div><h1>Tableau de bord</h1><p class="lede">Où tu en es, ce qu’il reste à faire cette semaine et ton prochain achat.</p></div></div>';
+
+  if (!ui.introHidden && (owned === 0 || state.cash === 0)){
+    h += '<div class="card" style="margin-bottom:16px"><h2>Pour démarrer <button class="btn sm ghost" data-act="intro-hide">Masquer</button></h2>' +
+      '<p class="muted small" style="margin:0">Trois minutes de réglage, et tout le reste se calcule tout seul.</p>' +
+      '<div class="intro"><div><b>1</b>Dans <a href="#empire">Mon empire</a>, coche ce que tu possèdes déjà et ta plateforme.</div>' +
+      '<div><b>2</b>Ici, entre ton solde actuel (banque + liquide).</div>' +
+      '<div><b>3</b>Dans <a href="#routines">Routines</a>, choisis ton temps de jeu : tu obtiens un plan de session.</div></div>' +
+      '<p class="small muted" style="margin:10px 0 0">Sur téléphone, ajoute le site à ton écran d’accueil (Safari : Partager, puis « Sur l’écran d’accueil » ; Chrome : menu ⋮, puis « Ajouter à l’écran d’accueil ») : il s’ouvre comme une appli et marche hors connexion.</p></div>';
+  }
+
+  h += '<div class="grid">';
+  // Solde
+  h += '<div class="card s5"><h2>Ton solde</h2><div class="big money">' + fmt(state.cash) + '</div>' +
+    '<form class="form-row" data-form="cash" style="margin-top:12px"><div class="field"><label for="cash-in">Mettre à jour</label><input type="text" id="cash-in" autocomplete="off" placeholder="ex. 3,2M ou 450k"></div><button class="btn" type="submit">Enregistrer</button></form>' +
+    '<div class="kv"><div><span class="eyebrow">Empire</span><b>' + short(empireValue()) + '</b><span class="small muted">' + owned + ' propriété' + (owned > 1 ? 's' : '') + '</span></div>' +
+    '<div><span class="eyebrow">Passif</span><b>' + (passiveLow() ? '≈ ' + short(passiveLow()) + '/h' : '—') + '</b><span class="small muted">estimation basse</span></div>' +
+    '<div><span class="eyebrow">Rythme actif</span><b>≈ ' + short(rate) + '/h</b><span class="small muted">session de 2 h</span></div></div></div>';
+  // Prochain achat
+  if (next){
+    const pct = next.cost ? Math.min(100, Math.round(state.cash / next.cost * 100)) : 100;
+    const miss = Math.max(0, next.cost - state.cash);
+    h += '<div class="card s7 hot"><h2>Prochain achat <small>étape ' + (nextIdx + 1) + ' sur ' + R.length + '</small></h2>' +
+      '<div class="row between"><b style="font-size:20px">' + esc(next.title) + '</b><span class="money" style="font-size:18px">' + (next.cost ? short(next.cost) : 'Gratuit') + '</span></div>' +
+      '<p class="small" style="margin:6px 0 12px;max-width:65ch">' + esc(next.why) + '</p>' +
+      (next.cost ? '<div class="meter money" role="img" aria-label="' + pct + ' % du prix"><i style="width:' + pct + '%"></i></div>' +
+        '<p class="small" style="margin:8px 0 0">' + (miss ? 'Il te manque <b class="money">' + fmt(miss) + '</b>, soit ≈ <b>' + dmin(miss / Math.max(rate, 1) * 60) + '</b> de jeu à ton rythme actuel.' : '<b class="money">Tu as de quoi l’acheter.</b> Fonce, sauf s’il est annoncé en promo jeudi.') + '</p>' : '') +
+      '<div class="row" style="margin-top:12px"><a class="btn primary" href="#achats">Voir le plan d’achat</a><a class="btn ghost" href="#routines">Mon plan de session</a></div></div>';
+  } else {
+    h += '<div class="card s7 hot"><h2>Prochain achat</h2><p style="margin:0">Tu as coché toute la feuille de route. Il ne reste qu’à optimiser ta semaine.</p></div>';
+  }
+  // Semaine
+  const wTop = wItems.filter(it => !weeklyDone(it)).slice(0,5);
+  h += '<div class="card s6"><h2>Cette semaine <small>' + wDone + '/' + wItems.length + ' faits</small></h2>' +
+    '<div class="meter"><i style="width:' + Math.round(wDone / Math.max(1,wItems.length) * 100) + '%"></i></div>' +
+    '<p class="small" style="margin:8px 0 10px">Encore ≈ <b class="money">' + short(weeklyLeft()) + '</b> de bonus à prendre. ' + resetLine('Reset jeudi 11 h', P.w.next) + '</p>' +
+    '<div class="checks">' + (wTop.length ? weeklyList(wTop) : '<p class="muted" style="margin:0">Tout est fait. Belle semaine.</p>') + monthlyRow() + '</div>' +
+    '<div class="row" style="margin-top:10px"><a class="btn sm ghost" href="#routines">Toute la routine</a></div></div>';
+  // Jour
+  h += '<div class="card s6"><h2>Aujourd’hui <small>' + dDone + '/' + dItems.length + ' faits</small></h2>' +
+    '<div class="meter"><i style="width:' + Math.round(dDone / Math.max(1,dItems.length) * 100) + '%"></i></div>' +
+    '<p class="small" style="margin:8px 0 10px">' + resetLine('Nouvelle journée', P.d.next) + '</p>' +
+    '<div class="checks">' + dItems.map(it => checkRow('daily', it, !!state.daily.done[it.id])).join('') + '</div></div>';
+  // Chronos
+  const timers = state.timers.slice().sort((a,b) => a.end - b.end);
+  h += '<div class="card s4"><h2>Chronos</h2>' + (timers.length ? '<div class="timers">' + timers.slice(0,4).map(timerCard).join('') + '</div>' :
+    '<p class="muted small" style="margin:0 0 10px">Aucune recharge en cours.</p><a class="btn sm" href="#chronos">Lancer un chrono</a>') + '</div>';
+  // Gains
+  h += '<div class="card s4"><h2>Gains notés</h2><div class="kv" style="margin-top:0;grid-template-columns:1fr 1fr">' +
+    '<div><span class="eyebrow">Aujourd’hui</span><b class="money">' + short(gToday) + '</b></div><div><span class="eyebrow">Semaine</span><b class="money">' + short(gWeek) + '</b></div></div>' +
+    '<form class="form-row" data-form="quicklog" style="margin-top:12px"><div class="field"><label for="ql-amt">Ajout rapide</label><input type="text" id="ql-amt" autocomplete="off" placeholder="ex. 600k"></div><button class="btn" type="submit">Noter</button></form></div>';
+  // Bonus
+  h += '<div class="card s4 event"><h2>Bonus en cours</h2>' + eventBlock() + '</div>';
+  h += '</div>';
+  return h;
+}
+function eventBlock(){
+  if (eventLive()){
+    return '<span class="eyebrow">' + esc(EVENT.label) + '</span><ul>' + EVENT.items.map(i => '<li>' + esc(i) + '</li>').join('') + '</ul>' +
+      '<p class="small muted" style="margin:0">D’après les guides de la semaine. À confirmer sur le <a href="https://www.rockstargames.com/newswire" target="_blank" rel="noopener">Newswire</a>.</p>';
+  }
+  return '<p style="margin:0 0 8px">Les bonus notés ici ont expiré jeudi. Les nouveaux sont sur le <a href="https://www.rockstargames.com/newswire" target="_blank" rel="noopener">Newswire de Rockstar</a>.</p><p class="small muted" style="margin:0">Pour les afficher ici, mets à jour le bloc EVENT de index.html (voir le README).</p>';
+}
+
+/* ---------- Routines ---------- */
+function renderRoutines(P){
+  const plan = buildPlan(ui.budget);
+  const start = new Date();
+  let h = '<div class="view-head"><div><h1>Routines</h1><p class="lede">Un plan de session calculé d’après ce que tu possèdes, tes bonus hebdo restants et tes chronos en cours. Coche au fur et à mesure.</p></div></div>';
+  h += '<div class="card"><h2>Plan de session <small>' + (state.settings.mode === 'groupe' ? 'solo + groupe' : 'solo') + ' · rythme ' + ({debutant:'débutant', normal:'normal', rapide:'rapide'}[state.settings.pace]) + '</small></h2>' +
+    '<div class="chips" role="group" aria-label="Temps de jeu">' + [[30,'30 min'],[60,'1 h'],[120,'2 h'],[180,'3 h et plus']].map(([m,l]) =>
+      '<button class="chip" data-act="budget" data-min="' + m + '" aria-pressed="' + (ui.budget === m) + '">' + l + '</button>').join('') + '</div>' +
+    '<div class="plan-sum"><span class="big">≈ ' + short(plan.total) + '</span><span class="muted">en ' + dmin(plan.minutes) + ' · ≈ ' + short(plan.minutes ? plan.total / plan.minutes * 60 : 0) + '/h, hors ventes de stock</span></div>' +
+    '<ol class="timeline">' + plan.steps.map(s => stepRow(s, start)).join('') + '</ol></div>';
+
+  h += '<div class="grid" style="margin-top:16px">';
+  const dItems = dailyItems();
+  h += '<div class="card s6"><h2>Chaque jour <small>' + resetLine('reset', P.d.next) + '</small></h2><div class="checks">' + dItems.map(it => checkRow('daily', it, !!state.daily.done[it.id])).join('') + '</div></div>';
+  const wItems = weeklyItems();
+  h += '<div class="card s6"><h2>Chaque semaine <small>' + resetLine('reset jeudi 11 h', P.w.next) + '</small></h2><div class="checks">' + weeklyList(wItems) + monthlyRow() + '</div></div>';
+  h += '</div>';
+
+  h += '<h2 class="section-title">La semaine type</h2><p class="section-sub">Les bonus de 1re réalisation se remettent à zéro le jeudi : organise ta semaine autour.</p>' +
+    '<div class="week-rhythm">' +
+    '<div><b>Jeudi</b><span class="small">Nouveaux bonus. Lis le Newswire et lance les 1ers runs qui paient le plus.</span></div>' +
+    '<div><b>Vendredi au dimanche</b><span class="small">Grosses sessions : boucle Cayo et Dr. Dre, ventes de stock.</span></div>' +
+    '<div><b>Lundi, mardi</b><span class="small">Sessions courtes : objectifs du jour, contrats, coffres.</span></div>' +
+    '<div><b>Mercredi soir</b><span class="small">Rattrape les 1ers runs oubliés avant le reset de jeudi 11 h.</span></div></div>';
+  return h;
+}
+function stepRow(s, start){
+  const at = new Date(start.getTime() + s.t*60000);
+  const rel = '+' + Math.floor(s.t/60) + ':' + String(s.t%60).padStart(2,'0');
+  if (s.kind === 'aux'){
+    return '<li class="step-aux"><div class="when"><b>' + hhmm(at) + '</b><span>' + rel + '</span></div><div class="what"><h3>' + esc(s.title) + '</h3><div class="meta">' + dmin(s.dur) + '</div><p class="tip">' + esc(s.text) + '</p></div></li>';
+  }
+  const a = s.act;
+  const key = a.id + '@' + s.t;
+  const label = a.name + (s.n > 1 ? ' ×' + s.n : '');
+  let actions;
+  if (ui.completing === key){
+    actions = '<form class="confirm" data-form="complete" data-id="' + a.id + '" data-first="' + (s.first ? 1 : 0) + '">' +
+      '<label class="small" for="cf-amt">Gain réel</label><input type="text" id="cf-amt" value="' + esc(NF.format(s.first ? a.first : a.pay)) + '" autocomplete="off">' +
+      '<button class="btn sm primary" type="submit">Valider</button><button class="btn sm ghost" type="button" data-act="cancel-complete">Annuler</button></form>';
+  } else {
+    actions = '<div class="actions"><button class="btn sm primary" data-act="complete" data-id="' + key + '">Terminé, noter le gain</button></div>';
+  }
+  return '<li><div class="when"><b>' + hhmm(at) + '</b><span>' + rel + '</span></div><div class="what">' +
+    '<div class="row"><h3>' + esc(label) + '</h3>' + (s.first ? '<span class="pill next">1er run de la semaine</span>' : '') + '</div>' +
+    '<div class="meta">≈ ' + dmin(s.dur) + ' · <span class="money">+' + short(s.gain) + '</span>' + (a.cd ? ' · recharge ' + esc(a.cdTxt) : '') + '</div>' +
+    (a.tip ? '<p class="tip">' + esc(a.tip) + '</p>' : '') + actions + '</div></li>';
+}
+
+/* ---------- Empire ---------- */
+function renderEmpire(){
+  const S = state.settings;
+  const owned = PROPS.filter(p => own(p.id)).length;
+  let h = '<div class="view-head"><div><h1>Mon empire</h1><p class="lede">Coche ce que tu possèdes. Tout le reste (plan d’achat, routines, méthodes disponibles) s’adapte.</p></div>' +
+    '<div class="row"><span class="pill solid">' + owned + ' cochée' + (owned > 1 ? 's' : '') + '</span><span class="pill ok">≈ ' + short(empireValue()) + '</span></div></div>';
+  h += '<div class="card"><h2>Mon profil</h2><div class="settings">' +
+    selectField('platform', 'Plateforme', [['ps5','PS5'],['xbox','Xbox Series X|S'],['pce','PC (Enhanced)'],['pcl','PC (Legacy)']], S.platform) +
+    selectField('gtaplus', 'GTA+', [['0','Non'],['1','Oui, abonné']], S.gtaplus ? '1' : '0') +
+    selectField('mode', 'Je joue', [['solo','Surtout en solo'],['groupe','Parfois en groupe']], S.mode) +
+    selectField('pace', 'Mon rythme', [['debutant','Débutant'],['normal','Normal'],['rapide','Rapide (je connais les missions)']], S.pace) +
+    '</div>' + (S.platform === 'pcl' && S.gtaplus ? '<p class="notice">GTA+ n’existe pas sur PC Legacy : il faut la version Enhanced.</p>' : '') +
+    (S.platform === 'pcl' ? '' : '<p class="small muted" style="margin:10px 0 0">Nouveau personnage sur cette plateforme ? Le Career Builder offre 4 M$ au départ (une seule fois).</p>') + '</div>';
+  CATS.forEach(cat => {
+    const tops = PROPS.filter(p => p.cat === cat.id && (!p.parent || PROP[p.parent].cat !== cat.id));
+    h += '<h2 class="section-title">' + esc(cat.name) + '</h2><p class="section-sub">' + esc(cat.desc) + '</p><div class="card"><div class="checks">' + tops.map(p => propTree(p, 0)).join('') + '</div></div>';
+  });
+  h += '<h2 class="section-title" id="sauvegarde">Sauvegarde et transfert</h2><p class="section-sub">Tes données restent dans ce navigateur. Pour les passer du PC au téléphone (ou l’inverse), copie le code de transfert sur un appareil et colle-le sur l’autre.</p>' +
+    '<div class="grid"><div class="card s6"><h2>Exporter</h2><div class="row"><button class="btn primary" data-act="export-copy">Copier le code de transfert</button><button class="btn" data-act="export-file">Télécharger un fichier</button></div>' +
+    (ui.exportMsg ? '<p class="small" style="margin:10px 0 0">' + esc(ui.exportMsg) + '</p>' : '') +
+    '<textarea id="export-out" readonly' + (ui.exportCode ? '' : ' hidden') + ' style="margin-top:10px;min-height:80px">' + esc(ui.exportCode || '') + '</textarea></div>' +
+    '<div class="card s6"><h2>Importer</h2><div class="field"><label for="import-code">Coller un code de transfert</label><textarea id="import-code" placeholder="QG1:…" style="min-height:80px">' + esc(ui.importDraft || '') + '</textarea></div>' +
+    '<div class="row" style="margin-top:10px"><button class="btn primary" data-act="import-code">Importer le code</button><label class="btn" for="import-file">Choisir un fichier…</label><input type="file" id="import-file" accept=".json,application/json" hidden></div>' +
+    (ui.importMsg ? '<p class="small" style="margin:10px 0 0">' + esc(ui.importMsg) + '</p>' : '') +
+    '<p class="small muted" style="margin:10px 0 0">L’import remplace les données de cet appareil.</p></div></div>' +
+    '<div class="row" style="margin-top:16px"><button class="btn ghost" data-act="reset-all">Tout effacer sur cet appareil</button></div>';
+  return h;
+}
+function propTree(p, depth){
+  const kids = PROPS.filter(k => k.parent === p.id);
+  return propRow(p, depth) + kids.map(k => propTree(k, depth + 1)).join('');
+}
+function priceTxt(p){ return p.price ? (p.from ? 'dès ' : '') + (p.approx ? '≈ ' : '') + short(p.price) : 'Gratuit'; }
+function propRow(p, depth){
+  const o = own(p.id), ok = !p.parent || own(p.parent), id = 'own-' + p.id;
+  return '<label class="prop d' + Math.min(depth,2) + (o ? ' is-owned' : '') + (ok ? '' : ' locked') + '" for="' + id + '">' +
+    '<input type="checkbox" id="' + id + '" data-own="' + p.id + '"' + (o ? ' checked' : '') + (ok ? '' : ' disabled') + '>' +
+    '<span class="body"><span class="label">' + esc(p.name) + '</span><span class="note">' + esc(p.what) + '</span></span>' +
+    '<span class="price">' + priceTxt(p) + '</span></label>';
+}
+function selectField(key, label, opts, val){
+  return '<div class="field"><label for="set-' + key + '">' + label + '</label><select id="set-' + key + '" data-setting="' + key + '">' +
+    opts.map(([v,l]) => '<option value="' + v + '"' + (String(val) === v ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></div>';
+}
+
+/* ---------- Achats ---------- */
+function renderAchats(){
+  const R = roadmap();
+  const nextId = (R.find(s => !s.done) || {}).id;
+  let h = '<div class="view-head"><div><h1>Plan d’achat</h1><p class="lede">L’ordre conseillé pour un joueur surtout solo en novembre 2026. Chaque étape finance la suivante.</p></div></div>';
+  h += '<label class="toggle card" for="set-deduct" style="margin-bottom:14px"><input type="checkbox" id="set-deduct" data-setting-bool="deduct"' + (state.settings.deduct ? ' checked' : '') + '><span><b>Déduire le prix de mon solde</b><br><span class="small muted">Quand tu cliques sur « Je l’ai acheté » ci-dessous. Cocher dans Mon empire ne déduit rien.</span></span></label>';
+  h += '<ol class="road">' + R.map((s, i) => {
+    const st = s.done ? 'done' : (s.id === nextId ? 'next' : 'later');
+    const pill = st === 'done' ? '<span class="pill ok">Acquis</span>' : st === 'next' ? '<span class="pill next">Prochain</span>' : '<span class="pill">Plus tard</span>';
+    const chips = s.propsObj.map(p => '<span class="mreq' + (own(p.id) ? ' ok' : '') + '">' + (own(p.id) ? '✓ ' : '') + esc(p.name) + ' · ' + priceTxt(p) + '</span>').join('');
+    const afford = s.cost && state.cash >= s.cost;
+    return '<li class="' + st + '"><span class="n">' + (i + 1) + '</span><div>' +
+      '<div class="row between"><h3>' + esc(s.title) + '</h3>' + pill + '</div>' +
+      '<p class="small">' + esc(s.why) + '</p><div class="props">' + chips + '</div>' +
+      '<div class="foot"><span class="small"><span class="muted">Débloque :</span> ' + esc(s.unlocks) + '</span>' +
+      (s.done ? '' : '<span class="small">' + (s.cost ? 'Reste à payer <b class="money">' + short(s.cost) + '</b>' + (afford ? ' · <b class="money">dans tes moyens</b>' : '') : 'Gratuit') + '</span>' +
+        '<button class="btn sm' + (st === 'next' ? ' primary' : '') + '" data-act="buy" data-id="' + s.id + '">' + (s.cost ? 'Je l’ai acheté' : 'C’est fait') + '</button>') +
+      '</div></div></li>';
+  }).join('') + '</ol>';
+  h += '<div class="grid" style="margin-top:24px"><div class="card s6"><h2>À éviter</h2><ul class="avoid">' + AVOID.map(([t,d]) => '<li><b>' + esc(t) + '</b><span class="small muted">' + esc(d) + '</span></li>').join('') + '</ul></div>' +
+    '<div class="card s6"><h2>Règles d’or</h2><ol class="rules">' + RULES.map(r => '<li>' + esc(r) + '</li>').join('') + '</ol></div></div>';
+  return h;
+}
+
+/* ---------- Méthodes ---------- */
+function renderMethodes(){
+  const rows = ACTS.map(a => ({a, rate: a.pay / a.dur * 60, frate: a.first ? a.first / a.dur * 60 : 0, ok: available(a)}))
+    .filter(r => ui.filter === 'all' || r.ok)
+    .sort((x,y) => y.rate - x.rate);
+  const max = Math.max(1, ...ACTS.map(a => a.pay / a.dur * 60));
+  let h = '<div class="view-head"><div><h1>Méthodes</h1><p class="lede">Les gains par heure de jeu effective, recharges non comprises. Tu remplis les recharges avec d’autres activités.</p></div>' +
+    '<div class="chips" role="group" aria-label="Filtre"><button class="chip" data-act="filter" data-v="mine" aria-pressed="' + (ui.filter === 'mine') + '">Disponible pour moi</button><button class="chip" data-act="filter" data-v="all" aria-pressed="' + (ui.filter === 'all') + '">Tout</button></div></div>';
+  h += '<div class="card"><h2>Revenus actifs <small>trié par gain/heure en répétition</small></h2><div class="mlist">' +
+    (rows.length ? rows.map(r => {
+      const a = r.a;
+      const req = a.req.length ? a.req.map(id => '<span class="mreq' + (own(id) ? ' ok' : '') + '">' + (own(id) ? '✓ ' : '') + esc(PROP[id].name) + '</span>').join('') : '<span class="mreq ok">Aucune propriété</span>';
+      return '<div class="mrow' + (r.ok ? '' : ' off') + '"><div class="mname"><b>' + esc(a.name) + '</b><div class="chips">' + req + (a.solo ? '' : '<span class="mreq">Groupe</span>') + '</div></div>' +
+        '<div class="mpay">' + esc(a.payTxt) + '<br><span class="muted">≈ ' + dmin(a.dur) + ' · recharge ' + esc(a.cdTxt) + '</span></div>' +
+        '<div class="mrate"><b>≈ ' + short(r.rate) + '/h</b>' + (r.frate ? ' <span class="small muted">· 1er run ≈ ' + short(r.frate) + '/h</span>' : '') +
+        '<div class="meter money"><i style="width:' + Math.round(r.rate / max * 100) + '%"></i></div></div></div>';
+    }).join('') : '<p class="muted" style="margin:0">Rien de disponible avec ton empire actuel. Coche tes propriétés dans Mon empire, ou affiche tout.</p>') + '</div></div>';
+  h += '<h2 class="section-title">Revenus passifs</h2><p class="section-sub">Un jour de jeu dure 48 minutes réelles. Ces business ne produisent que si tu es connecté.</p>' +
+    '<div class="card"><div class="scroll-x"><table class="ptable"><thead><tr><th>Business</th><th>Stock plein</th><th>≈ net/h</th><th>Conseil</th></tr></thead><tbody>' +
+    PASSIVE.map(p => '<tr class="' + (own(p.req) ? '' : 'off') + '"><td><b>' + esc(p.name) + '</b>' + (own(p.req) ? ' <span class="pill ok">✓</span>' : '') + '</td><td class="n">' + esc(p.full) + '</td><td class="n">' +
+      (p.high ? (p.low === p.high ? short(p.low) : short(p.low) + '–' + short(p.high)) : '—') + '</td><td class="small">' + esc(p.note) + '</td></tr>').join('') +
+    '</tbody></table></div><p class="small muted" style="margin:10px 0 0">Les sources divergent beaucoup sur le passif (frais de fournitures inclus ou non) : la fourchette basse est la plus réaliste.</p></div>';
+  return h;
+}
+
+/* ---------- Chronos ---------- */
+function timerCard(t){
+  const left = t.end - Date.now(), total = Math.max(1, t.end - t.start);
+  const pct = Math.min(100, Math.max(0, Math.round((1 - left/total) * 100)));
+  return '<div class="timer' + (left <= 0 ? ' ready' : '') + '" data-timer="' + t.id + '"><div><div class="t-label">' + esc(t.label) + '</div><div class="small muted">Fin à ' + hhmm(new Date(t.end)) + '</div></div>' +
+    '<div class="t-left" data-end="' + t.end + '">' + clock(left) + '</div>' +
+    '<div class="meter"><i data-bar-start="' + t.start + '" data-bar-end="' + t.end + '" style="width:' + pct + '%"></i></div>' +
+    '<div class="row"><button class="btn sm" data-act="timer-restart" data-id="' + t.id + '">Relancer</button><button class="btn sm ghost" data-act="timer-del" data-id="' + t.id + '">Supprimer</button></div></div>';
+}
+function renderChronos(){
+  const timers = state.timers.slice().sort((a,b) => a.end - b.end);
+  const presets = PRESETS.map((p,i) => Object.assign({i}, p)).filter(p => p.req.every(own));
+  let h = '<div class="view-head"><div><h1>Chronos</h1><p class="lede">Lance une recharge quand tu termines une activité. Le plan de session en tient compte. Garde la page ouverte sur ton téléphone pendant que tu joues.</p></div></div>';
+  h += '<div class="grid"><div class="card s7"><h2>En cours</h2>' + (timers.length ? '<div class="timers">' + timers.map(timerCard).join('') + '</div>' : '<p class="muted" style="margin:0">Aucun chrono. Choisis-en un à droite.</p>') + '</div>';
+  h += '<div class="stack s5"><div class="card"><h2>Lancer</h2><div class="presets">' + presets.map(p => '<button class="preset" data-act="preset" data-i="' + p.i + '"><b>' + dmin(p.min) + '</b>' + esc(p.label) + '</button>').join('') + '</div>' +
+    '<form class="form-row" data-form="custom-timer" style="margin-top:14px"><div class="field"><label for="ct-label">Chrono perso</label><input type="text" id="ct-label" placeholder="ex. Labo d’acide plein" autocomplete="off"></div>' +
+    '<div class="field" style="flex:0 1 90px"><label for="ct-min">Minutes</label><input type="number" id="ct-min" min="1" max="1440" value="30"></div><button class="btn" type="submit">Lancer</button></form></div>' +
+    '<div class="card"><h2>Options</h2>' +
+    '<label class="toggle" for="opt-sound"><input type="checkbox" id="opt-sound" data-ui="sound"' + (ui.sound ? ' checked' : '') + '><span><b>Bip à la fin d’un chrono</b><br><span class="small muted">Fonctionne tant que la page reste ouverte.</span></span></label>' +
+    '<label class="toggle" for="opt-wake" style="margin-top:12px"><input type="checkbox" id="opt-wake" data-ui="wake"' + (wantWake ? ' checked' : '') + '><span><b>Garder l’écran allumé</b><br><span class="small muted">Pratique sur un téléphone posé à côté de la manette.</span></span></label>' +
+    (wakeMsg ? '<p class="notice">' + esc(wakeMsg) + '</p>' : '') + '</div></div></div>';
+  return h;
+}
+
+/* ---------- Journal ---------- */
+function renderJournal(P){
+  const now = Date.now(), today = localDayKey(now);
+  const sum = arr => arr.reduce((a,e) => a + e.amount, 0);
+  const gToday = sum(state.log.filter(e => localDayKey(e.t) === today));
+  const gWeek = sum(state.log.filter(e => e.t >= P.w.start));
+  const g7 = sum(state.log.filter(e => e.t >= now - 7*864e5));
+  const gAll = sum(state.log);
+  const srcOpts = ['Cayo Perico','Contrat Dr. Dre','The Titan Job','Cluckin’ Bell Farm Raid','KnoWay Out','Kortz Center Heist','Contrat du garage auto','Braquage de la casse','Payphone Hit','Vente de stock','Coffres','Quotidiens','GTA+','Autre'];
+  let h = '<div class="view-head"><div><h1>Journal</h1><p class="lede">Note ce que tu gagnes pour voir ta vraie progression. Une dépense ? Tape un montant négatif (ex. −1,2M).</p></div></div>';
+  h += '<div class="tiles"><div class="tile"><span class="eyebrow">Aujourd’hui</span><b>' + short(gToday) + '</b></div><div class="tile"><span class="eyebrow">Depuis jeudi</span><b>' + short(gWeek) + '</b></div>' +
+    '<div class="tile"><span class="eyebrow">7 derniers jours</span><b>' + short(g7) + '</b></div><div class="tile"><span class="eyebrow">Total noté</span><b>' + short(gAll) + '</b></div></div>';
+  h += '<div class="grid" style="margin-top:16px"><div class="card s5"><h2>Noter un gain</h2><form data-form="log" class="stack" style="gap:10px">' +
+    '<div class="field"><label for="lg-amt">Montant</label><input type="text" id="lg-amt" autocomplete="off" placeholder="ex. 1,1M ou 450k" required></div>' +
+    '<div class="field"><label for="lg-src">Source</label><select id="lg-src">' + srcOpts.map(s => '<option>' + esc(s) + '</option>').join('') + '</select></div>' +
+    '<label class="toggle" for="lg-cash"><input type="checkbox" id="lg-cash"' + (state.settings.addCash ? ' checked' : '') + '><span>Mettre à jour mon solde aussi</span></label>' +
+    '<button class="btn primary" type="submit">Ajouter</button></form></div>';
+  h += '<div class="card s7"><h2>14 derniers jours <small>gains par jour</small></h2>' + chart14() + '</div></div>';
+  const entries = state.log.slice().sort((a,b) => b.t - a.t).slice(0,60);
+  h += '<div class="grid" style="margin-top:16px"><div class="card s7"><h2>Dernières entrées <small>' + state.log.length + ' au total</small></h2>' +
+    (entries.length ? '<div class="entries">' + entries.map(e => '<div class="entry"><div><div class="src">' + esc(e.src) + '</div><div class="d">' +
+      new Date(e.t).toLocaleString('fr-FR',{weekday:'short',day:'numeric',month:'short',hour:'2-digit',minute:'2-digit'}) + '</div></div>' +
+      '<span class="money' + (e.amount < 0 ? ' neg' : '') + '">' + (e.amount < 0 ? '' : '+') + fmt(e.amount) + '</span>' +
+      '<button class="icon-btn" data-act="log-del" data-id="' + e.id + '" aria-label="Supprimer cette entrée">×</button></div>').join('') + '</div>'
+      : '<p class="muted" style="margin:0">Rien de noté pour l’instant. Le bouton « Terminé » des plans de session note aussi ici.</p>') + '</div>';
+  h += '<div class="card s5"><h2>Mes notes</h2><textarea id="notes" data-notes placeholder="ex. Cible Cayo cette semaine : collier de rubis. Promo agence -40 % jusqu’à jeudi.">' + esc(state.notes) + '</textarea><p class="small muted" style="margin:6px 0 0">Enregistrées automatiquement.</p></div></div>';
+  return h;
+}
+function chart14(){
+  const days = [];
+  const base = new Date(); base.setHours(12,0,0,0);
+  for (let i = 13; i >= 0; i--){ const d = new Date(base.getTime() - i*864e5); days.push({key:localDayKey(d.getTime()), d, v:0}); }
+  const idx = Object.fromEntries(days.map((x,i) => [x.key, i]));
+  state.log.forEach(e => { const i = idx[localDayKey(e.t)]; if (i !== undefined && e.amount > 0) days[i].v += e.amount; });
+  const maxV = Math.max(...days.map(d => d.v));
+  if (!maxV) return '<p class="muted" style="margin:0">Le graphique apparaîtra dès ta première entrée.</p>';
+  const step = niceStep(maxV / 3), top = Math.ceil(maxV / step) * step;
+  const W = 700, H = 230, L = 52, R = 8, T = 22, B = 26, iw = W - L - R, ih = H - T - B, band = iw / days.length, bw = Math.min(30, band * 0.62);
+  let s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Gains par jour sur 14 jours">';
+  for (let v = 0; v <= top + 1; v += step){
+    const y = T + ih - v / top * ih;
+    s += '<line class="grid-l" x1="' + L + '" x2="' + (W - R) + '" y1="' + y.toFixed(1) + '" y2="' + y.toFixed(1) + '"/><text class="axis" x="' + (L - 8) + '" y="' + (y + 4).toFixed(1) + '" text-anchor="end">' + esc(short(v)) + '</text>';
+  }
+  days.forEach((d, i) => {
+    const x = L + i * band + (band - bw) / 2, bh = d.v / top * ih, y = T + ih - bh;
+    const lab = d.d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});
+    if (d.v) s += '<path class="bar-m" id="bar-' + i + '" d="' + barPath(x, y, bw, bh, 4) + '"/>';
+    s += '<rect class="hit" data-i="' + i + '" data-tip="' + esc(lab + ' · ' + short(d.v)) + '" data-x="' + (L + i*band + band/2).toFixed(1) + '" data-y="' + (d.v ? y : T + ih).toFixed(1) + '" x="' + (L + i*band).toFixed(1) + '" y="' + T + '" width="' + band.toFixed(1) + '" height="' + ih + '"/>';
+    if ((days.length - 1 - i) % 2 === 0) s += '<text class="axis" x="' + (L + i*band + band/2).toFixed(1) + '" y="' + (H - 6) + '" text-anchor="middle">' + d.d.getDate() + '</text>';
+    if (i === days.length - 1 && d.v) s += '<text class="vlabel" x="' + (x + bw/2).toFixed(1) + '" y="' + (y - 6).toFixed(1) + '" text-anchor="middle">' + esc(short(d.v)) + '</text>';
+  });
+  s += '</svg>';
+  return '<div class="chart" id="chart">' + s + '<div class="pop" id="pop" hidden></div></div>';
+}
+function niceStep(raw){
+  const p = Math.pow(10, Math.floor(Math.log10(raw))), n = raw / p;
+  return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * p;
+}
+function barPath(x, y, w, h, r){
+  r = Math.min(r, w/2, h);
+  return 'M' + x.toFixed(1) + ',' + (y + h).toFixed(1) + 'V' + (y + r).toFixed(1) + 'Q' + x.toFixed(1) + ',' + y.toFixed(1) + ' ' + (x + r).toFixed(1) + ',' + y.toFixed(1) +
+    'H' + (x + w - r).toFixed(1) + 'Q' + (x + w).toFixed(1) + ',' + y.toFixed(1) + ' ' + (x + w).toFixed(1) + ',' + (y + r).toFixed(1) + 'V' + (y + h).toFixed(1) + 'Z';
+}
+
+/* ---------- Rendu principal ---------- */
+const VIEWS = {tableau:renderDash, routines:renderRoutines, empire:renderEmpire, achats:renderAchats, methodes:renderMethodes, chronos:renderChronos, journal:renderJournal};
+function render(){
+  const P = periods();
+  const active = document.activeElement;
+  const focusId = active && active.id && view.contains(active) ? active.id : null;
+  const sel = focusId && typeof active.selectionStart === 'number' ? [active.selectionStart, active.selectionEnd] : null;
+  const typed = focusId && active.tagName === 'INPUT' && active.type === 'text' ? active.value : null;
+  document.getElementById('top-cash').textContent = short(state.cash);
+  document.querySelectorAll('.tab').forEach(b => {
+    if (b.dataset.tab === current) b.setAttribute('aria-current','page'); else b.removeAttribute('aria-current');
+  });
+  const doneTimers = state.timers.filter(t => t.end <= Date.now()).length;
+  const chronoTab = document.querySelector('.tab[data-tab="chronos"]');
+  chronoTab.innerHTML = 'Chronos' + (doneTimers ? '<span class="dot">' + doneTimers + '</span>' : '');
+  view.innerHTML = VIEWS[current](P);
+  if (focusId){
+    const el = document.getElementById(focusId);
+    if (el){
+      if (typed !== null && el.tagName === 'INPUT' && !el.value) el.value = typed;
+      el.focus({preventScroll:true});
+      if (sel) { try { el.setSelectionRange(sel[0], sel[1]); } catch(e){} }
+    }
+  }
+  bindChart();
+}
+function bindChart(){
+  const chart = document.getElementById('chart'); if (!chart) return;
+  const pop = document.getElementById('pop'), svg = chart.querySelector('svg');
+  const mark = (r, on) => { const b = document.getElementById('bar-' + r.dataset.i); if (b) b.classList.toggle('on', on); };
+  const show = r => {
+    const box = svg.getBoundingClientRect(), k = box.width / 700;
+    chart.querySelectorAll('.bar-m.on').forEach(b => b.classList.remove('on'));
+    mark(r, true);
+    pop.textContent = r.dataset.tip; pop.hidden = false;
+    pop.style.left = (+r.dataset.x * k) + 'px'; pop.style.top = (+r.dataset.y * k - 4) + 'px';
+  };
+  chart.querySelectorAll('.hit').forEach(r => {
+    r.addEventListener('pointerenter', () => show(r));
+    r.addEventListener('pointerleave', () => { pop.hidden = true; mark(r, false); });
+    r.addEventListener('click', () => show(r));
+  });
+}
+function route(){
+  const h = (location.hash || '').slice(1);
+  const nextView = TABS.includes(h) ? h : 'tableau';
+  const changed = nextView !== current;
+  current = nextView; ui.completing = null; ui.exportMsg = ui.importMsg = ui.exportCode = ui.importDraft = '';
+  render();
+  if (changed) window.scrollTo({top:0});
+}
+
+/* ======================================================================
+   ACTIONS
+   ====================================================================== */
+function setOwned(id, val){
+  if (val){ let p = PROP[id]; while (p){ state.owned[p.id] = true; p = p.parent ? PROP[p.parent] : null; } }
+  else { delete state.owned[id]; PROPS.filter(k => k.parent === id).forEach(k => setOwned(k.id, false)); }
+}
+function addLog(amount, src, toCash){
+  state.log.push({id:uid(), t:Date.now(), amount, src, c: !!toCash});
+  if (toCash) state.cash = Math.max(0, state.cash + amount);
+}
+function startTimer(label, min, act){
+  const now = Date.now();
+  state.timers = state.timers.filter(t => !(act && t.act === act));
+  state.timers.push({id:uid(), act: act || null, label, start:now, end: now + min*60000});
+}
+
+document.getElementById('tabs').addEventListener('click', e => {
+  const b = e.target.closest('.tab'); if (!b) return;
+  if (location.hash === '#' + b.dataset.tab) route(); else location.hash = b.dataset.tab;
+});
+
+view.addEventListener('click', e => {
+  ensureAudio();
+  const b = e.target.closest('[data-act]'); if (!b) return;
+  const act = b.dataset.act, id = b.dataset.id;
+  if (act === 'intro-hide'){ ui.introHidden = true; saveUI(); render(); }
+  else if (act === 'budget'){ ui.budget = +b.dataset.min; ui.completing = null; saveUI(); render(); }
+  else if (act === 'filter'){ ui.filter = b.dataset.v; saveUI(); render(); }
+  else if (act === 'salvage'){ state.weekly.salvage = Math.min(3, Math.max(0, (state.weekly.salvage || 0) + (+b.dataset.d))); commit(); }
+  else if (act === 'complete'){ ui.completing = id; render(); const i = document.getElementById('cf-amt'); if (i){ i.focus(); i.select(); } }
+  else if (act === 'cancel-complete'){ ui.completing = null; render(); }
+  else if (act === 'buy'){
+    const s = roadmap().find(x => x.id === id); if (!s) return;
+    if (state.settings.deduct && s.cost) state.cash = Math.max(0, state.cash - s.cost);
+    s.props.forEach(pid => setOwned(pid, true));
+    commit();
+  }
+  else if (act === 'preset'){ const p = PRESETS[+b.dataset.i]; if (p){ startTimer(p.label, p.min, p.act); commit(); } }
+  else if (act === 'timer-del'){ state.timers = state.timers.filter(t => t.id !== id); notified.delete(id); commit(); }
+  else if (act === 'timer-restart'){
+    const t = state.timers.find(x => x.id === id);
+    if (t){ const len = t.end - t.start; t.start = Date.now(); t.end = t.start + len; notified.delete(id); commit(); }
+  }
+  else if (act === 'export-copy'){
+    encodeState().then(code => {
+      ui.exportCode = code;
+      const done = msg => { ui.exportMsg = msg; render(); const t = document.getElementById('export-out'); if (t){ t.focus(); t.select(); } };
+      if (navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(code).then(() => done('Code copié. Colle-le sur ton autre appareil (message à toi-même, notes…).'), () => done('Copie automatique refusée : sélectionne le code ci-dessous et copie-le.'));
+      } else done('Sélectionne le code ci-dessous et copie-le.');
+    });
+  }
+  else if (act === 'export-file'){
+    const blob = new Blob([JSON.stringify(state, null, 1)], {type:'application/json'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = 'qg-los-santos-' + localDayKey(Date.now()) + '.json';
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    ui.exportMsg = 'Fichier téléchargé.'; render();
+  }
+  else if (act === 'import-code'){
+    const v = (document.getElementById('import-code') || {}).value || '';
+    if (!v.trim()){ ui.importMsg = 'Colle d’abord un code de transfert.'; render(); return; }
+    if (!confirm('Remplacer les données de cet appareil par celles du code ?')) return;
+    decodeCode(v).then(obj => { importState(obj); ui.importDraft = ''; ui.importMsg = 'Import réussi.'; render(); })
+      .catch(() => { ui.importDraft = v; ui.importMsg = 'Code illisible. Vérifie qu’il est complet : il commence par QG1: ou QG0:.'; render(); });
+  }
+  else if (act === 'reset-all'){
+    if (!confirm('Effacer toutes tes données sur cet appareil ? Pense à exporter avant.')) return;
+    state = defaults(); notified.clear(); commit();
+  }
+  else if (act === 'log-del'){
+    const e2 = state.log.find(x => x.id === id);
+    if (e2){ if (e2.c) state.cash = Math.max(0, state.cash - e2.amount); state.log = state.log.filter(x => x.id !== id); commit(); }
+  }
+});
+
+view.addEventListener('change', e => {
+  const el = e.target;
+  if (el.dataset.check){
+    const k = el.dataset.check, id = el.dataset.id;
+    const bag = k === 'daily' ? state.daily.done : k === 'weekly' ? state.weekly.done : state.monthly.done;
+    if (el.checked) bag[id] = true; else delete bag[id];
+    commit();
+  } else if (el.dataset.own){
+    setOwned(el.dataset.own, el.checked); commit();
+  } else if (el.dataset.setting){
+    const k = el.dataset.setting;
+    state.settings[k] = k === 'gtaplus' ? el.value === '1' : el.value; commit();
+  } else if (el.dataset.settingBool){
+    state.settings[el.dataset.settingBool] = el.checked; commit();
+  } else if (el.dataset.ui === 'sound'){
+    ui.sound = el.checked; saveUI(); if (el.checked){ ensureAudio(); beep(1); }
+  } else if (el.dataset.ui === 'wake'){
+    toggleWake(el.checked);
+  } else if (el.id === 'import-file' && el.files && el.files[0]){
+    el.files[0].text().then(txt => {
+      if (!confirm('Remplacer les données de cet appareil par celles du fichier ?')) return;
+      importState(JSON.parse(txt)); ui.importMsg = 'Import réussi.'; render();
+    }).catch(() => { ui.importMsg = 'Fichier illisible : choisis un fichier exporté depuis QG Los Santos.'; render(); });
+  } else if (el.id === 'lg-cash'){
+    state.settings.addCash = el.checked; persist();
+  }
+});
+
+let notesTimer = null;
+view.addEventListener('input', e => {
+  if (e.target.hasAttribute('data-notes')){
+    state.notes = e.target.value.slice(0, 5000);
+    clearTimeout(notesTimer); notesTimer = setTimeout(persist, 700);
+  }
+});
+
+view.addEventListener('submit', e => {
+  e.preventDefault();
+  const f = e.target, kind = f.dataset.form;
+  if (kind === 'cash'){
+    const v = parseAmount(f.querySelector('#cash-in').value);
+    if (isNaN(v) || v < 0){ f.querySelector('#cash-in').setCustomValidity('Montant non reconnu. Exemples : 3200000, 3,2M, 450k'); f.reportValidity(); f.querySelector('#cash-in').setCustomValidity(''); return; }
+    state.cash = v; commit();
+  } else if (kind === 'quicklog'){
+    const v = parseAmount(f.querySelector('#ql-amt').value);
+    if (isNaN(v) || !v){ f.querySelector('#ql-amt').setCustomValidity('Montant non reconnu. Exemples : 600k, 1,1M'); f.reportValidity(); f.querySelector('#ql-amt').setCustomValidity(''); return; }
+    addLog(v, 'Ajout rapide', state.settings.addCash); commit();
+  } else if (kind === 'log'){
+    const inp = f.querySelector('#lg-amt'), v = parseAmount(inp.value);
+    if (isNaN(v) || !v){ inp.setCustomValidity('Montant non reconnu. Exemples : 1,1M, 450k, -2M'); f.reportValidity(); inp.setCustomValidity(''); return; }
+    addLog(v, f.querySelector('#lg-src').value, f.querySelector('#lg-cash').checked); commit();
+  } else if (kind === 'complete'){
+    const a = ACT[f.dataset.id]; if (!a) return;
+    const inp = f.querySelector('#cf-amt'), v = parseAmount(inp.value);
+    if (isNaN(v)){ inp.setCustomValidity('Montant non reconnu'); f.reportValidity(); inp.setCustomValidity(''); return; }
+    if (v) addLog(v, a.name, state.settings.addCash);
+    if (f.dataset.first === '1' && a.weekly) state.weekly.done[a.weekly] = true;
+    if (a.id === 'salvage') state.weekly.salvage = Math.min(3, (state.weekly.salvage || 0) + 1);
+    if (a.cd) startTimer('Recharge ' + a.name, a.cd, a.id);
+    ui.completing = null; commit();
+  } else if (kind === 'custom-timer'){
+    const label = (f.querySelector('#ct-label').value || 'Chrono perso').trim().slice(0, 60);
+    const min = Math.round(+f.querySelector('#ct-min').value);
+    if (!(min >= 1 && min <= 1440)) return;
+    startTimer(label, min, null); commit();
+  }
+});
+
+/* ---------- Son, écran, tic-tac ---------- */
+let audioCtx = null;
+function ensureAudio(){
+  if (audioCtx || !ui.sound) return;
+  try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e){ audioCtx = null; }
+}
+function beep(n){
+  if (!audioCtx) return;
+  try {
+    for (let i = 0; i < n; i++){
+      const o = audioCtx.createOscillator(), g = audioCtx.createGain(), t0 = audioCtx.currentTime + i*0.25;
+      o.type = 'sine'; o.frequency.value = 880; g.gain.setValueAtTime(0.0001, t0); g.gain.exponentialRampToValueAtTime(0.25, t0 + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.18);
+      o.connect(g); g.connect(audioCtx.destination); o.start(t0); o.stop(t0 + 0.2);
+    }
+  } catch(e){}
+}
+let wakeLock = null, wakeMsg = '', wantWake = false;
+async function toggleWake(on){
+  wakeMsg = ''; wantWake = on;
+  if (on){
+    try { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); }
+    catch(e){ wakeLock = null; wantWake = false; wakeMsg = 'Ton navigateur n’autorise pas à garder l’écran allumé ici.'; }
+  } else if (wakeLock){ try { await wakeLock.release(); } catch(e){} wakeLock = null; }
+  if (current === 'chronos') render();
+}
+const notified = new Set(state.timers.filter(t => t.end <= Date.now()).map(t => t.id));
+function tick(){
+  const now = Date.now();
+  document.querySelectorAll('[data-end]').forEach(el => { el.textContent = clock(+el.dataset.end - now); });
+  document.querySelectorAll('[data-bar-end]').forEach(el => {
+    const s = +el.dataset.barStart, e = +el.dataset.barEnd;
+    el.style.width = Math.min(100, Math.max(0, (now - s) / Math.max(1, e - s) * 100)) + '%';
+  });
+  document.querySelectorAll('[data-until]').forEach(el => { el.textContent = until(+el.dataset.until - now); });
+  let fresh = false;
+  state.timers.forEach(t => { if (t.end <= now && !notified.has(t.id)){ notified.add(t.id); fresh = true; } });
+  if (fresh){ if (ui.sound) beep(3); render(); }
+  const ready = state.timers.filter(t => t.end <= now).length;
+  document.title = ready ? '(' + ready + ') Prêt · QG Los Santos' : 'QG Los Santos';
+  const P = weekInfo(new Date()), D = dayInfo(new Date());
+  if (state.weekly.key && (state.weekly.key !== P.key || state.daily.key !== D.key)) render();
+}
+
+window.addEventListener('hashchange', route);
+route();
+setInterval(tick, 1000);
+document.addEventListener('visibilitychange', () => { if (!document.hidden){ tick(); if (wantWake && wakeLock === null) toggleWake(true); } });
+askPersistence();
+if ('serviceWorker' in navigator && location.protocol === 'https:') navigator.serviceWorker.register('sw.js').catch(() => {});
+})();
+</script>
+</body>
+</html>
