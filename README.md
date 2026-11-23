@@ -33,6 +33,16 @@ Chaque fiche de bâtiment liste tous ses emplacements achetables avec leur prix 
 
 L’onglet **Carte** montre tous les bâtiments, un type à la fois ou seulement les tiens. C’est un plan schématique dessiné pour l’appli, sans la carte officielle de Rockstar : les positions sont approximatives, au niveau du quartier. Les quartiers et le tracé sont dans `data.js` (`AREAS`, `MAP`).
 
+## Mon plan (plan personnalisé)
+
+L’onglet **Mon plan** calcule, dans ton navigateur et à partir de tes données (ce que tu as coché, ton solde, tes heures de jeu par semaine), l’ordre optimal de tous tes achats :
+
+1. Ta semaine est simulée : tes heures en sessions de 3 h, avec les règles du plan de session (1ers runs, recharges, 3 casses max), plus ton revenu passif. Ça donne ton revenu moyen par heure de jeu.
+2. Chaque achat possible est testé sur cette semaine : la différence de revenu est ce qu’il t’apporte vraiment. Un braquage qui ne fait que remplacer un autre aussi payant n’apporte presque rien.
+3. L’étape suivante est celle qui se rembourse le plus vite (prix ÷ gain réel par heure). L’appli calcule le temps de jeu pour réunir l’argent, l’ajoute et recommence.
+
+Chaque étape indique : quand tu pourras l’acheter, quoi faire pour réunir l’argent, l’emplacement conseillé, ce que ça débloque, ton revenu avant/après et le temps de remboursement. Les achats qui n’apporteraient rien à ton rythme sont rangés à part, avec la raison. Certaines combinaisons sont évaluées ensemble (Kosatka + Sparrow), parce qu’un achat seul peut être moyen et excellent avec son complément.
+
 ## Plan d’achat
 
 L’onglet Achats juge chaque achat sur ce qu’il débloque, avec les mêmes gains par heure que l’onglet Méthodes :
