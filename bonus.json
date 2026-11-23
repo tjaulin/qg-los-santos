@@ -1,0 +1,111 @@
+{
+  "version": 1,
+  "source": "GTA Boss",
+  "sourceUrl": "https://www.gtaboss.gg/gta-5-online/gta-online-weekly-updates",
+  "title": "GTA Online Weekly Update – November 19, 2026",
+  "start": "2026-11-19T10:00:00.000Z",
+  "end": "2026-11-26T10:00:00.000Z",
+  "sections": [
+    {
+      "id": "bonus",
+      "title": "Bonus GTA$ et RP",
+      "items": [
+        "4X Freemode Challenges GTA$ & RP",
+        "3X Stunt Race Series GTA$ & RP",
+        "3X Community Series GTA$ & RP",
+        "2X All Contact Missions (4X for GTA+ Members, through December 2), including Madrazo's Dispatch Services, Gerald's Last Play, Premium Deluxe Repo Work & Lowriders GTA$ & RP",
+        "2X Sumo (Remix) [Featured Series] GTA$ & RP"
+      ]
+    },
+    {
+      "id": "challenge",
+      "title": "Défi hebdomadaire",
+      "items": [
+        "Complete three Gerald's Last Play missions"
+      ]
+    },
+    {
+      "id": "targets",
+      "title": "Cibles principales des braquages",
+      "items": [
+        "\"Juiced\" Kortz Center Heist",
+        "\"The Downfall of Rome\" Kortz Center Heist",
+        "\"Consumato\" Kortz Center Heist"
+      ]
+    },
+    {
+      "id": "salvage",
+      "title": "Casse : véhicules à voler",
+      "items": [
+        "Kanjo SJ Coupes · Dinka $1,370,000 The Podium Robbery",
+        "Dominator ASP Muscle · Vapid Imani −30% $1,775,000 $1,242,500 The Duggan Robbery",
+        "Stinger TT Sports · Grotti HSW Imani $2,380,000 The Gangbanger Robbery"
+      ]
+    },
+    {
+      "id": "discounts",
+      "title": "Promotions",
+      "items": [
+        "811 Super · Pfister Imani −30% $1,135,000 $794,500",
+        "Autarch Super · Overflod −30% $1,955,000 $1,368,500",
+        "Cargobob Helicopters · Western Company Imani −30% $1,790,000 $1,253,000",
+        "Dominator ASP Muscle · Vapid Imani −30% $1,775,000 $1,242,500",
+        "Dominator GTX Muscle · Vapid −30% $725,000 $507,500",
+        "Lectro Motorcycles · Principe −30% $997,500 $698,250",
+        "RC Bandito Off-Road −30% $1,590,000 $1,113,000",
+        "Shamal Planes · Buckingham −30% $1,150,000 $805,000",
+        "Uranus LozSpeed Sports Classics · Vapid Imani −30% $1,140,000 $798,000",
+        "Viseris Sports Classics · Lampadati Imani −30% $875,000 $612,500",
+        "Windsor Drop Coupes · Enus −30% $900,000 $630,000"
+      ]
+    },
+    {
+      "id": "podium",
+      "title": "Voiture du podium (casino)",
+      "items": [
+        "Baller ST-D SUVs · Gallivanter Imani $1,715,000"
+      ]
+    },
+    {
+      "id": "prize",
+      "title": "Prize Ride (LS Car Meet)",
+      "items": [
+        "SM722 Sports · Benefactor $1,669,000 Place 1st in an LS Car Meet Series race for three days in a row:"
+      ]
+    },
+    {
+      "id": "gunvan",
+      "title": "Gun Van",
+      "items": [
+        "Double Barrel Shotgun −10% $15,450 $13,905 −20% · $12,205",
+        "Flare Gun −10% $3,750 $3,375 −20% · $2,962",
+        "Knife FREE",
+        "Pipe Bomb −10% $500 $450 −20% · $395",
+        "Pool Cue −10% $6,250 $5,625 −20% · $4,937",
+        "Railgun −10% $730,000 $657,000 −20% · $576,700",
+        "Sticky Bombs −10% $600 $540 −20% · $474",
+        "Tactical SMG −10% $325,000 $292,500 −20% · $256,750",
+        "Tear Gas −10% $150 $135 −20% · $118",
+        "Baseball Bat",
+        "Armor"
+      ]
+    },
+    {
+      "id": "gtaplus",
+      "title": "Avantages GTA+",
+      "items": [
+        "Itali RSX Free",
+        "Warehouses & Vehicle Warehouses 60% off",
+        "Body Armor & Ammo 75% off",
+        "Import/Export Sell Missions 2X GTA$ & RP",
+        "Staff Sourced Special Cargo 2X Speed",
+        "Contact Missions 2X GTA$ & RP",
+        "White Prismatic Pearl Chameleon Paint & Wheel Paint Vehicle Paint",
+        "Pop Art Revere Collar",
+        "Sod Off Painting",
+        "Blagueurs Baseball Bat & Snakeskin Knife Weapon Finishes"
+      ]
+    }
+  ],
+  "fetchedAt": "2026-11-23T10:47:40.332Z"
+}

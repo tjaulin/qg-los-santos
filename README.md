@@ -1,6 +1,6 @@
 # QG Los Santos
 
-Copilote perso pour gagner un maximum d’argent sur GTA Online. Le site te dit où tu en es et te prépare un plan de session selon ce que tu possèdes. Il donne aussi l’ordre d’achat conseillé, le gain par heure de chaque activité, des chronos de recharge et un journal de tes gains.
+Copilote perso pour gagner un maximum d’argent sur GTA Online. Le site te dit où tu en es et te prépare un plan de session selon ce que tu possèdes, améliorations comprises. Il donne aussi l’ordre d’achat conseillé, une fiche pour chaque braquage, bâtiment et véhicule, le gain par heure de chaque activité, les bonus de la semaine, des chronos de recharge et un journal de tes gains.
 
 Outil non officiel, sans lien avec Rockstar Games. Les montants sont approximatifs : ils viennent de guides publics à jour du patch 1.73 (The Kortz Center Heist, juillet 2026).
 
@@ -27,22 +27,17 @@ Pour passer tes données d’un appareil à l’autre : **Mon empire → Sauvega
 
 Tu peux aussi télécharger un fichier de sauvegarde et le réimporter plus tard.
 
-## Mettre à jour les bonus de la semaine
+## Bonus de la semaine (bouton « Sync »)
 
-Les bonus changent chaque jeudi. Ils sont décrits dans le bloc `EVENT` en haut du script, dans `index.html` :
+Les bonus changent chaque jeudi vers 11 h (heure de Paris). Une tâche automatique GitHub ([.github/workflows/bonus.yml](.github/workflows/bonus.yml)) lance [scripts/update-bonus.mjs](scripts/update-bonus.mjs) le jeudi à 12 h 30, avec deux rattrapages (jeudi 17 h, vendredi 10 h). Le script lit la page publique des bonus hebdo de [GTA Boss](https://www.gtaboss.gg/gta-5-online/gta-online-weekly-updates), écrit `bonus.json`, puis republie le site.
 
-```js
-const EVENT = {
-  start: Date.UTC(2026,10,19,10), end: Date.UTC(2026,10,26,10),
-  label: 'Du jeudi 19 au jeudi 26 novembre 2026',
-  items: [ '…', '…' ],
-  challenge: '3 missions Gerald’s Last Play'
-};
-```
+Dans l’appli, le bouton **Sync** du tableau de bord relit `bonus.json`. Il est aussi relu tout seul à l’ouverture.
 
-Attention, les mois commencent à 0 dans `Date.UTC` : novembre s’écrit 10.
+Tu y trouves : les bonus 2× à 4×, le défi hebdo, les cibles principales des braquages, les véhicules de la casse, les promos, la voiture du podium, le Prize Ride, le Gun Van et les avantages GTA+. Les textes restent en anglais, comme sur la source.
 
-Tu peux modifier ce bloc directement sur GitHub : ouvre `index.html`, clique sur le crayon, modifie, puis « Commit changes ». GitHub Pages republie le site en une minute environ. Quand les bonus ont expiré, le site affiche simplement un lien vers le Newswire de Rockstar.
+**Si les bonus ne sont pas encore à jour** : onglet **Actions** du dépôt → « Bonus de la semaine » → **Run workflow**. Ça marche aussi depuis l’appli GitHub sur téléphone. Une minute plus tard, appuie sur Sync.
+
+**Si la tâche échoue** (par exemple parce que GTA Boss a changé sa page), GitHub t’envoie un e-mail et `bonus.json` n’est pas modifié. Le script est à adapter dans `scripts/update-bonus.mjs`.
 
 ## Tester en local
 
@@ -56,7 +51,12 @@ Puis ouvre http://localhost:8000.
 
 | Fichier | Rôle |
 |---|---|
-| `index.html` | Tout le site : données de jeu, calculs et affichage |
+| `index.html` | La page : mise en page et styles |
+| `data.js` | Les données de jeu : propriétés, améliorations, braquages, fiches, ordre d’achat. C’est ici qu’on corrige un prix ou un texte. |
+| `app.js` | Les calculs (plan de session, priorités, revenus passifs) et l’affichage |
+| `bonus.json` | Les bonus de la semaine, mis à jour automatiquement |
+| `scripts/update-bonus.mjs` | Le script qui récupère les bonus |
+| `.github/workflows/bonus.yml` | La tâche automatique du jeudi |
 | `manifest.webmanifest` | Nom, couleurs et icônes pour l’installation sur l’écran d’accueil |
 | `sw.js` | Fonctionnement hors connexion |
 | `icon.svg`, `icon-*.png` | Icônes |
