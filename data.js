@@ -124,7 +124,7 @@ const PROPS = [
      conseils:['Le Fleeca se fait à 2, les autres à 4.', 'Depuis juillet 2026, les préparations paient plus et chaque finale a un bonus de 1re réalisation hebdo.'],
      avis:'Peu cher et utile si tu as des amis pour jouer.'}},
 
-  {id:'mansion', cat:'braquage', name:'Manoir (dont la Villa de Richman)', price:11500000, from:true,
+  {id:'mansion', cat:'braquage', name:'Manoir', price:11500000, from:true,
    alias:'villa richman tongva vinewood résidence propriété mansion',
    what:'Une des 3 propriétés de luxe : Propriété de Tongva, Résidence de Vinewood ou Villa de Richman. Nécessaire pour l’atelier d’art.',
    fiche:{
