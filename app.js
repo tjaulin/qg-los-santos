@@ -8,6 +8,11 @@ const ACT = Object.fromEntries(ACTS.map(a => [a.id, a]));
 const ACTIONS_URL = 'https://github.com/tjaulin/qg-los-santos/actions/workflows/bonus.yml';
 const NEWSWIRE_URL = 'https://www.rockstargames.com/fr/newswire';
 const TARGET_KEYS = {kortz:'Kortz', cayo:'Cayo', casino:'Casino'};
+const NC_FEEDERS = ['bunker','coke','meth','cash','weed','docs','cargo']; // business qui alimentent l'entrepôt de la boîte de nuit
+const GROUP_ONLY = ['arcade','facility','apartment'];
+const PASSIVE_BIZ = ['acidlab','bunker','nightclub','coke','meth','cash','weed','docs'];
+const LAUNDER_BIZ = PASSIVE_BIZ.concat(['agency','arcade','salvage','autoshop','hangar','vehiclewh','cargo']); // ce que le Car Wash blanchit
+const HOURS_OPTS = [[3,'3 h'],[5,'5 h'],[8,'8 h'],[10,'10 h'],[15,'15 h'],[20,'20 h'],[30,'30 h et plus']];
 
 /* ======================================================================
    OUTILS
@@ -95,7 +100,7 @@ function localDayKey(t){ const d = new Date(t); return d.getFullYear() + '-' + S
    ====================================================================== */
 const LS_KEY = 'qg-ls-state-v1', UI_KEY = 'qg-ls-ui-v1', BONUS_KEY = 'qg-ls-bonus-v1';
 function defaults(){
-  return {v:2, settings:{platform:'ps5', gtaplus:false, mode:'solo', pace:'normal', deduct:true, addCash:true},
+  return {v:2, settings:{platform:'ps5', gtaplus:false, mode:'solo', pace:'normal', deduct:true, addCash:true, hours:10},
     cash:0, owned:{}, daily:{key:'',done:{}}, weekly:{key:'',done:{},salvage:0}, monthly:{key:'',done:{}},
     timers:[], log:[], notes:'', updated:0};
 }
@@ -236,7 +241,12 @@ function priceTxt(p){
 }
 function ficheOf(id){ let p = PROP[id]; while (p && !p.fiche && p.parent) p = PROP[p.parent]; return p ? p.id : id; }
 function catName(id){ const c = CATS.find(c => c.id === id); return c ? c.name : ''; }
-function available(a){ return a.req.every(own) && (a.solo || state.settings.mode === 'groupe'); }
+function makeO(map){
+  const lv = id => { const v = map[id]; return v === true ? 1 : (+v || 0); };
+  return {map, lvl: lv, own: id => lv(id) > 0};
+}
+const curO = () => makeO(state.owned);
+function available(a, O){ O = O || curO(); return a.req.every(O.own) && (a.solo || state.settings.mode === 'groupe'); }
 function periods(){
   const now = new Date();
   const d = dayInfo(now), w = weekInfo(now), mk = d.key.slice(0,7);
@@ -245,25 +255,33 @@ function periods(){
   if (state.monthly.key !== mk) state.monthly = {key:mk, done:{}};
   return {d, w};
 }
-function setOwned(id, val){
+function setOwnedIn(map, id, val){
   const p = PROP[id]; if (!p) return;
+  const has = k => { const v = map[k]; return v === true || +v > 0; };
   if (val){
-    state.owned[id] = p.max ? Math.min(p.max, val === true ? p.max : +val) : true;
+    map[id] = p.max ? Math.min(p.max, val === true ? p.max : +val) : true;
     let q = p.parent ? PROP[p.parent] : null;
-    while (q){ if (!own(q.id)) state.owned[q.id] = q.max ? 1 : true; q = q.parent ? PROP[q.parent] : null; }
+    while (q){ if (!has(q.id)) map[q.id] = q.max ? 1 : true; q = q.parent ? PROP[q.parent] : null; }
   } else {
-    delete state.owned[id];
-    PROPS.filter(k => k.parent === id).forEach(k => setOwned(k.id, false));
+    delete map[id];
+    PROPS.filter(k => k.parent === id).forEach(k => setOwnedIn(map, k.id, false));
   }
 }
-function passiveRate(p){
-  if (!own(p.req)) return 0;
+function setOwned(id, val){ setOwnedIn(state.owned, id, val); }
+/* Revenu passif estimé : 45 % sans amélioration, jusqu'à 100 % avec équipement + personnel.
+   Entrepôt de la boîte de nuit : un technicien ne produit que s'il a un business à revendre. */
+function passiveRate(p, O){
+  O = O || curO();
+  if (!O.own(p.req)) return 0;
   let f = 1;
-  if (p.ups && p.ups.length) f *= 0.45 + 0.55 * p.ups.filter(own).length / p.ups.length;
-  if (p.techs) f *= (1 + lvl('nc_techs')) / 5;
+  if (p.ups && p.ups.length) f *= 0.45 + 0.55 * p.ups.filter(O.own).length / p.ups.length;
+  if (p.techs) f *= Math.min(1 + O.lvl('nc_techs'), NC_FEEDERS.filter(O.own).length) / 5;
+  if (p.scale) f *= Math.min(1, LAUNDER_BIZ.filter(O.own).length / 6);
+  if (p.req === 'cash' && O.own('carwash')) f *= 1.35;
+  if (p.req === 'weed' && O.own('weedshop')) f *= 1.35;
   return p.low * f;
 }
-function passiveLow(){ return sum(PASSIVE.map(passiveRate)); }
+function passiveLow(O){ return sum(PASSIVE.map(p => passiveRate(p, O))); }
 function empireValue(){ return sum(PROPS.map(ownedValue)); }
 
 function dailyItems(){
@@ -304,36 +322,26 @@ function weeklyDone(it){
 function weeklyLeft(){
   return sum(weeklyItems().map(it => it.counter ? Math.max(0, 3 - (state.weekly.salvage || 0)) * 250000 : (!weeklyDone(it) && it.gain ? it.gain : 0)));
 }
-function roadmap(){
-  const list = ROADMAP.slice();
-  if (state.settings.mode === 'groupe'){ const i = list.findIndex(s => s.id === 'mckenzie'); list.splice(i+1, 0, ROAD_GROUP); }
-  return list.map(s => {
-    const props = s.props.map(id => PROP[id]);
-    const missing = props.filter(p => !full(p.id));
-    return Object.assign({}, s, {propsObj:props, missing, cost:sum(missing.map(missingCost)), done:missing.length === 0});
-  });
-}
-function roadIndex(propId){ const R = roadmap(); const i = R.findIndex(s => s.props.includes(propId)); return i >= 0 ? {i, step:R[i]} : null; }
-
 /* Plan de session : algorithme glouton sur le gain par minute (voir « Comment c'est calculé ») */
-function buildPlan(budget){
+function planCore(budget, ctx){
+  const O = ctx.O;
   const pace = {debutant:1.35, normal:1, rapide:0.8}[state.settings.pace] || 1;
   const now = Date.now();
-  const hasPassive = ['acidlab','bunker','nightclub','coke','meth','cash','weed','docs'].some(own);
+  const nPassive = PASSIVE_BIZ.filter(O.own).length, hasPassive = nPassive > 0;
   const steps = [];
   let t = 0;
   const openDur = budget <= 30 ? 5 : 10;
   steps.push({kind:'aux', t, dur:openDur, title:'Mise en route',
-    text: 'Session privée. ' + (['agency','nightclub','salvage','arcade'].some(own) ? 'Vide les coffres, ' : '') + (hasPassive ? 'relance les productions, ' : '') + 'regarde tes 3 objectifs du jour pour les faire en passant.'});
+    text: 'Session privée. ' + (['agency','nightclub','salvage','arcade'].some(O.own) ? 'Vide les coffres, ' : '') + (hasPassive ? 'relance les productions, ' : '') + 'regarde tes 3 objectifs du jour pour les faire en passant.'});
   t += openDur;
-  const closeDur = hasPassive && budget > 30 ? 15 : 0;
+  const closeDur = hasPassive && budget > 30 && !ctx.noClose ? Math.min(15, 5 * nPassive) : 0;
   const end = budget - closeDur;
-  const cands = ACTS.filter(available).map(a => {
-    const dur = Math.round(((a.fastReq && own(a.fastReq)) ? a.durFast : a.dur) * pace);
-    const timer = state.timers.find(x => x.act === a.id && x.end > now);
+  const cands = ACTS.filter(a => available(a, O)).map(a => {
+    const dur = Math.round(((a.fastReq && O.own(a.fastReq)) ? a.durFast : a.dur) * pace);
+    const timer = ctx.timers.find(x => x.act === a.id && x.end > now);
     return {a, dur, ready: timer ? Math.ceil((timer.end - now)/60000) : 0,
-      firstAvail: !!(a.weekly && a.first && !state.weekly.done[a.weekly]),
-      capLeft: a.cap ? Math.max(0, a.cap - (state.weekly.salvage || 0)) : Infinity, runs:0};
+      firstAvail: !!(a.weekly && a.first && !ctx.done[a.weekly]),
+      capLeft: a.cap ? Math.max(0, a.cap - (ctx.salvage || 0)) : Infinity, runs:0};
   });
   let guard = 0;
   while (t < end && guard++ < 60){
@@ -367,7 +375,102 @@ function buildPlan(budget){
   const minutes = merged.length ? merged[merged.length-1].t + merged[merged.length-1].dur : 0;
   return {steps:merged, total, minutes};
 }
+function buildPlan(budget){
+  return planCore(budget, {O:curO(), done:state.weekly.done, salvage:state.weekly.salvage || 0, timers:state.timers});
+}
 function ratePerHour(){ const p = buildPlan(120); return p.minutes ? p.total / (p.minutes/60) : 0; }
+
+/* Semaine simulée : ton temps de jeu découpé en sessions de 2 h (même calcul que le plan),
+   les 1ers runs une seule fois, plus le revenu passif pendant que tu es connecté,
+   moins le temps passé à vendre (≈ 3 min par tranche de 100 k$, valorisé à ton gain moyen par minute). */
+function weeklyIncome(O){
+  const hours = +state.settings.hours || 10;
+  let remaining = Math.round(hours * 60), active = 0, salvage = 0;
+  const done = {};
+  while (remaining >= 30){
+    const len = Math.min(120, remaining); remaining -= len;
+    const p = planCore(len, {O, done, salvage, timers:[], noClose:true});
+    active += p.total;
+    p.steps.forEach(st => {
+      if (st.kind !== 'act') return;
+      if (st.first && st.act.weekly) done[st.act.weekly] = true;
+      if (st.act.id === 'salvage') salvage += st.n;
+    });
+  }
+  const gross = passiveLow(O) * hours;
+  const sellCost = gross / 100000 * 3 * (active / Math.max(1, hours * 60));
+  const passive = gross - sellCost;
+  return {active, passive, total: active + passive};
+}
+
+/* Achats possibles : les étapes de data.js (ROADMAP) + tous les autres business et améliorations. */
+function bundlesList(){
+  const groupe = state.settings.mode === 'groupe';
+  const list = ROADMAP.map((b, i) => ({id:b.id, title:b.title, why:b.why, unlocks:b.unlocks, items:b.props, order:i}));
+  if (groupe) list.push({id:ROAD_GROUP.id, title:ROAD_GROUP.title, why:ROAD_GROUP.why, unlocks:ROAD_GROUP.unlocks, items:ROAD_GROUP.props, order:50});
+  const inList = new Set(list.flatMap(b => b.items));
+  PROPS.forEach(p => {
+    if (inList.has(p.id) || (!p.price && !p.max)) return;
+    if (GROUP_ONLY.includes(p.id) && !groupe) return;
+    if (p.kind === 'up'){
+      if (/_(equip|staff)$/.test(p.id) || !own(p.parent)) return;
+      list.push({id:'up-' + p.id, items:[p.id], why:p.what, main:p.parent, order:99});
+      return;
+    }
+    const chain = []; let q = p.parent ? PROP[p.parent] : null;
+    while (q){ chain.unshift(q.id); q = q.parent ? PROP[q.parent] : null; }
+    const ups = PROPS.filter(k => k.parent === p.id && /_(equip|staff)$/.test(k.id)).map(k => k.id);
+    const pre = chain.filter(id => !own(id)).map(id => PROP[id].name);
+    const title = (own(p.id) ? 'Améliorations : ' + p.name : p.name + (ups.length ? ' + améliorations' : '')) + (pre.length ? ' (avec ' + pre.join(', ') + ')' : '');
+    list.push({id:'auto-' + p.id, title, items:chain.concat([p.id], ups), why:(p.fiche && p.fiche.avis) || p.what, main:p.id, order:99});
+  });
+  return list;
+}
+let optCache = {key:'', val:null};
+function purchaseOptions(){
+  const key = JSON.stringify([state.owned, state.cash, state.settings.mode, state.settings.pace, state.settings.hours]);
+  if (optCache.key === key) return optCache.val;
+  const base = weeklyIncome(curO());
+  const perWeek = Math.max(base.total, 1);
+  const seen = new Set(), opts = [];
+  bundlesList().forEach(b => {
+    if (b.items.every(id => PROP[id].kind === 'up') && b.items.some(id => !own(PROP[id].parent))) return;
+    const missing = [];
+    const add = id => { if (missing.includes(id) || full(id)) return; const p = PROP[id]; if (p.parent && !own(p.parent)) add(p.parent); missing.push(id); };
+    b.items.forEach(add);
+    if (!missing.length) return;
+    const k = missing.slice().sort().join('+');
+    if (seen.has(k)) return;
+    seen.add(k);
+    const cost = sum(missing.map(id => missingCost(PROP[id])));
+    const map = Object.assign({}, state.owned);
+    missing.forEach(id => setOwnedIn(map, id, true));
+    const gain = weeklyIncome(makeO(map)).total - base.total;
+    const save = Math.max(0, cost - state.cash) / perWeek;
+    const payback = cost ? (gain > 0 ? cost / gain : Infinity) : 0;
+    opts.push(Object.assign({}, b, {
+      title: b.title || missing.map(id => PROP[id].name).join(' + '),
+      missing, cost, gain, save, payback, score: save + payback, main: b.main || missing[0]
+    }));
+  });
+  opts.sort((x, y) => (x.cost ? 1 : 0) - (y.cost ? 1 : 0) || x.score - y.score || x.order - y.order);
+  const val = {
+    base,
+    ranked: opts.filter(o => !o.cost || (o.gain > 0 && o.payback <= 104)),
+    slow: opts.filter(o => o.cost && o.gain > 0 && o.payback > 104),
+    comfort: opts.filter(o => o.cost && !(o.gain > 0))
+  };
+  optCache = {key, val};
+  return val;
+}
+function findOption(id){ const o = purchaseOptions(); return o.ranked.concat(o.slow, o.comfort).find(x => x.id === id) || null; }
+function weeksTxt(w){
+  if (!isFinite(w)) return 'jamais';
+  if (w <= 0) return 'tout de suite';
+  if (w < 1) return 'moins d’une semaine';
+  if (w < 10){ const r = Math.round(w * 10) / 10; return '≈ ' + r.toLocaleString('fr-FR') + ' semaine' + (r >= 2 ? 's' : ''); }
+  return '≈ ' + Math.round(w) + ' semaines';
+}
 
 /* ======================================================================
    RENDU
@@ -433,9 +536,8 @@ function bonusCard(compact){
 /* ---------- Tableau de bord ---------- */
 function renderDash(P){
   const owned = PROPS.filter(p => own(p.id)).length;
-  const R = roadmap();
-  const nextIdx = R.findIndex(s => !s.done);
-  const next = nextIdx >= 0 ? R[nextIdx] : null;
+  const PO = purchaseOptions();
+  const next = PO.ranked[0] || null;
   const rate = ratePerHour();
   const wItems = weeklyItems(), wDone = wItems.filter(weeklyDone).length;
   const dItems = dailyItems(), dDone = dItems.filter(it => state.daily.done[it.id]).length;
@@ -462,15 +564,17 @@ function renderDash(P){
   if (next){
     const pct = next.cost ? Math.min(100, Math.round(state.cash / next.cost * 100)) : 100;
     const miss = Math.max(0, next.cost - state.cash);
-    h += '<div class="card s7 hot"><h2>Prochain achat <small>étape ' + (nextIdx + 1) + ' sur ' + R.length + '</small></h2>' +
+    const partial = next.items.length > next.missing.length;
+    h += '<div class="card s7 hot"><h2>Prochain achat <small>n° 1 de ton classement</small></h2>' +
       '<div class="row between"><b style="font-size:20px">' + esc(next.title) + '</b><span class="money" style="font-size:18px">' + (next.cost ? short(next.cost) : 'Gratuit') + '</span></div>' +
-      '<p class="small" style="margin:6px 0 4px;max-width:65ch">' + esc(next.why) + '</p>' +
-      (next.missing.length < next.props.length ? '<p class="small muted" style="margin:0 0 8px">Il te reste : ' + next.missing.map(p => esc(p.name)).join(', ') + '.</p>' : '') +
-      (next.cost ? '<div class="meter money" role="img" aria-label="' + pct + ' % du prix"><i style="width:' + pct + '%"></i></div>' +
+      (partial ? '<p class="small muted" style="margin:4px 0 0">Il te reste : ' + next.missing.map(id => esc(PROP[id].name)).join(', ') + '.</p>' : '') +
+      '<p class="small" style="margin:6px 0 8px;max-width:65ch">' + esc(next.why) + '</p>' +
+      (next.cost ? '<p class="small" style="margin:0 0 8px">Rapporte <b class="money">≈ +' + short(next.gain) + '/semaine</b> · remboursé en <b>' + weeksTxt(next.payback) + '</b></p>' +
+        '<div class="meter money" role="img" aria-label="' + pct + ' % du prix"><i style="width:' + pct + '%"></i></div>' +
         '<p class="small" style="margin:8px 0 0">' + (miss ? 'Il te manque <b class="money">' + fmt(miss) + '</b>, soit ≈ <b>' + dmin(miss / Math.max(rate, 1) * 60) + '</b> de jeu à ton rythme actuel.' : '<b class="money">Tu as de quoi l’acheter.</b> Fonce, sauf s’il est annoncé en promo jeudi.') + '</p>' : '') +
-      '<div class="row" style="margin-top:12px"><a class="btn primary" href="#achats">Voir le plan d’achat</a><a class="btn ghost" href="#fiche-' + ficheOf((next.missing[0] || next.propsObj[0]).id) + '">Lire la fiche</a></div></div>';
+      '<div class="row" style="margin-top:12px"><a class="btn primary" href="#achats">Voir le classement</a><a class="btn ghost" href="#fiche-' + ficheOf(next.main) + '">Lire la fiche</a></div></div>';
   } else {
-    h += '<div class="card s7 hot"><h2>Prochain achat</h2><p style="margin:0">Tu as coché toute la feuille de route. Il ne reste qu’à optimiser ta semaine.</p></div>';
+    h += '<div class="card s7 hot"><h2>Prochain achat</h2><p style="margin:0">Plus aucun achat rentable à ton rythme. Il ne reste qu’à optimiser ta semaine.</p></div>';
   }
   const wTop = wItems.filter(it => !weeklyDone(it)).slice(0,5);
   h += '<div class="card s6"><h2>Cette semaine <small>' + wDone + '/' + wItems.length + ' faits</small></h2>' +
@@ -559,6 +663,7 @@ function renderEmpire(){
     selectField('gtaplus', 'GTA+', [['0','Non'],['1','Oui, abonné']], S.gtaplus ? '1' : '0') +
     selectField('mode', 'Je joue', [['solo','Surtout en solo'],['groupe','Parfois en groupe']], S.mode) +
     selectField('pace', 'Mon rythme', [['debutant','Débutant'],['normal','Normal'],['rapide','Rapide (je connais les missions)']], S.pace) +
+    selectField('hours', 'Je joue par semaine', HOURS_OPTS.map(([v,l]) => [String(v), l]), String(S.hours || 10)) +
     '</div>' + (S.platform === 'pcl' && S.gtaplus ? '<p class="notice">GTA+ n’existe pas sur PC Legacy : il faut la version Enhanced.</p>' : '') +
     (S.platform === 'pcl' ? '' : '<p class="small muted" style="margin:10px 0 0">Nouveau personnage sur cette plateforme ? Le Career Builder offre 4 M$ au départ (une seule fois).</p>') + '</div>';
   CATS.forEach(cat => {
@@ -606,30 +711,45 @@ function chip(p){
   const st = p.max ? lvl(p.id) + '/' + p.max + ' · ' : '';
   return '<a class="mreq' + (full(p.id) ? ' ok' : '') + '" href="#fiche-' + ficheOf(p.id) + '">' + (full(p.id) ? '✓ ' : '') + esc(p.name) + ' · ' + st + priceTxt(p) + '</a>';
 }
+function optionMetrics(o){
+  if (!o.cost) return '<span class="small"><b class="money">Gratuit</b> · à faire tout de suite</span>';
+  return '<span class="small">Rapporte <b class="money">≈ +' + short(o.gain) + '/sem.</b></span>' +
+    '<span class="small">Achetable <b>' + (o.save > 0 ? 'dans ' + weeksTxt(o.save) : 'maintenant') + '</b></span>' +
+    '<span class="small">Remboursé en <b>' + weeksTxt(o.payback) + '</b></span>';
+}
 function renderAchats(){
-  const R = roadmap();
-  const nextId = (R.find(s => !s.done) || {}).id;
-  let h = head('Plan d’achat', 'L’ordre conseillé pour un joueur surtout solo en novembre 2026. Chaque étape finance la suivante.');
-  h += '<label class="toggle card" for="set-deduct" style="margin-bottom:14px"><input type="checkbox" id="set-deduct" data-setting-bool="deduct"' + (state.settings.deduct ? ' checked' : '') + '><span><b>Déduire le prix de mon solde</b><br><span class="small muted">Quand tu cliques sur « Je l’ai acheté » ci-dessous. Cocher dans Mon empire ne déduit rien.</span></span></label>';
-  h += '<ol class="road">' + R.map((s, i) => {
-    const st = s.done ? 'done' : (s.id === nextId ? 'next' : 'later');
-    const pill = st === 'done' ? '<span class="pill ok">Acquis</span>' : st === 'next' ? '<span class="pill next">Prochain</span>' : '<span class="pill">Plus tard</span>';
-    const afford = s.cost && state.cash >= s.cost;
-    return '<li class="' + st + '"><span class="n">' + (i + 1) + '</span><div>' +
-      '<div class="row between"><h3>' + esc(s.title) + '</h3>' + pill + '</div>' +
-      '<p class="small">' + esc(s.why) + '</p><div class="props">' + s.propsObj.map(chip).join('') + '</div>' +
-      '<div class="foot"><span class="small"><span class="muted">Débloque :</span> ' + esc(s.unlocks) + '</span>' +
-      (s.done ? '' : '<span class="small">' + (s.cost ? 'Reste à payer <b class="money">' + short(s.cost) + '</b>' + (afford ? ' · <b class="money">dans tes moyens</b>' : '') : 'Gratuit') + '</span>' +
-        '<button class="btn sm' + (st === 'next' ? ' primary' : '') + '" data-act="buy" data-id="' + s.id + '">' + (s.cost ? 'Je l’ai acheté' : 'C’est fait') + '</button>') +
-      '</div></div></li>';
-  }).join('') + '</ol>';
-  h += '<details class="card more" style="margin-top:16px"><summary><b>Comment cet ordre est choisi</b></summary>' +
-    '<p>La liste est classée à la main d’après les guides de 2026, selon quatre critères, dans cet ordre :</p>' +
-    '<ol class="explain"><li><b>Le gain par heure pour un joueur solo</b> : d’abord ce qui rapporte le plus par heure de jeu sans avoir besoin d’amis.</li>' +
-    '<li><b>Le temps de remboursement</b> : un achat moins cher qui se rembourse en une ou deux semaines passe avant un plus cher (le labo d’acide avant l’agence, le hangar de McKenzie avant le Sparrow).</li>' +
-    '<li><b>Les dépendances</b> : la boîte de nuit vient après le bunker et le labo d’acide parce qu’elle revend leur production. Le manoir arrive en dernier car il ne sert qu’avec l’atelier d’art.</li>' +
-    '<li><b>Le confort en dernier</b> : Oppressor Mk II, décoration, sécurité ne rapportent rien directement.</li></ol>' +
-    '<p>Ensuite, l’appli filtre selon ce que tu as coché : une étape est « acquise » quand tous ses éléments le sont (pour la boîte de nuit, les 4 techniciens). Le prix affiché ne compte que ce qui te manque. En mode groupe, la salle d’arcade est ajoutée après le hangar de McKenzie.</p></details>';
+  const {base, ranked, slow, comfort} = purchaseOptions();
+  const hours = state.settings.hours || 10;
+  let h = head('Plan d’achat', 'Classé pour toi : en premier, ce qui sera rentabilisé le plus vite d’après ce que tu possèdes, ton solde et ton temps de jeu. Le classement se met à jour à chaque changement.',
+    '<div style="min-width:min(220px,100%)">' + selectField('hours', 'Je joue par semaine', HOURS_OPTS.map(([v,l]) => [String(v), l]), String(hours)) + '</div>');
+  h += '<div class="grid" style="margin-bottom:14px"><div class="card s7"><h2>Ton revenu estimé <small>' + hours + ' h de jeu par semaine</small></h2>' +
+    '<div class="big money">≈ ' + short(base.total) + '<span class="muted" style="font-size:.45em"> /semaine</span></div>' +
+    '<p class="small muted" style="margin:6px 0 0">Actif ≈ ' + short(base.active) + ' · passif ≈ ' + short(base.passive) + '. C’est la base qui sert à comparer chaque achat.</p></div>' +
+    '<label class="toggle card s5" for="set-deduct"><input type="checkbox" id="set-deduct" data-setting-bool="deduct"' + (state.settings.deduct ? ' checked' : '') + '><span><b>Déduire le prix de mon solde</b><br><span class="small muted">Quand tu cliques sur « Je l’ai acheté ». Cocher dans Mon empire ne déduit rien.</span></span></label></div>';
+  h += ranked.length ? '<ol class="road">' + ranked.map((o, i) => {
+    const partial = o.items.length > o.missing.length;
+    return '<li class="' + (i === 0 ? 'next' : 'later') + '"><span class="n">' + (i + 1) + '</span><div>' +
+      '<div class="row between"><h3>' + esc(o.title) + '</h3>' + (i === 0 ? '<span class="pill next">Prochain</span>' : '') + '<span class="money">' + (o.cost ? short(o.cost) : 'Gratuit') + '</span></div>' +
+      '<div class="foot">' + optionMetrics(o) + '</div>' +
+      '<p class="small">' + esc(o.why) + '</p>' +
+      '<div class="props">' + o.items.map(id => chip(PROP[id])).join('') + '</div>' +
+      '<div class="foot">' + (o.unlocks ? '<span class="small"><span class="muted">Débloque :</span> ' + esc(o.unlocks) + '</span>' : '') +
+      (partial ? '<span class="small muted">Il te reste : ' + o.missing.map(id => esc(PROP[id].name)).join(', ') + '</span>' : '') +
+      '<button class="btn sm' + (i === 0 ? ' primary' : '') + '" data-act="buy" data-id="' + o.id + '">' + (o.cost ? 'Je l’ai acheté' : 'C’est fait') + '</button></div></div></li>';
+  }).join('') + '</ol>' : '<div class="card"><p style="margin:0">Plus aucun achat rentable à ton rythme. Bravo.</p></div>';
+  const compact = (list) => '<ul class="avoid">' + list.map(o => '<li><div class="row between"><b>' + esc(o.title) + '</b><span class="money">' + short(o.cost) + '</span></div>' +
+    '<span class="small muted">' + (o.gain > 0 ? '≈ +' + short(o.gain) + '/sem. · remboursé en ' + weeksTxt(o.payback) + ' · ' : '') + esc(o.why) + '</span>' +
+    '<div class="row" style="margin-top:6px"><a class="btn sm ghost" href="#fiche-' + ficheOf(o.main) + '">Fiche</a><button class="btn sm" data-act="buy" data-id="' + o.id + '">Je l’ai acheté</button></div></li>').join('') + '</ul>';
+  if (slow.length) h += '<details class="card more" style="margin-top:16px"><summary><b>Pas rentable à ton rythme</b> (' + slow.length + ') : plus de 2 ans pour se rembourser</summary>' + compact(slow) + '</details>';
+  if (comfort.length) h += '<details class="card more" style="margin-top:16px"><summary><b>Confort, sans gain direct</b> (' + comfort.length + ') : sécurité, véhicules…</summary>' +
+    '<p class="small muted">Ils ne changent pas tes gains dans le calcul. Certains font quand même gagner du temps (Oppressor Mk II).</p>' + compact(comfort) + '</details>';
+  h += '<details class="card more" style="margin-top:16px"><summary><b>Comment ce classement est calculé</b></summary>' +
+    '<ol class="explain"><li><b>Ta semaine est simulée.</b> Ton temps de jeu (' + hours + ' h) est découpé en sessions de 2 h, avec le même calcul que le plan de session : 1ers runs de la semaine, recharges, limites (3 casses par semaine…). S’y ajoutent tes revenus passifs pendant que tu es connecté.</li>' +
+    '<li><b>Chaque achat est testé.</b> L’appli refait la simulation comme si tu l’avais déjà. La différence, c’est ce qu’il te rapporte en plus par semaine.</li>' +
+    '<li><b>Le score, c’est le temps avant qu’il soit rentabilisé :</b> les semaines pour réunir l’argent (en partant de ton solde, à ton revenu actuel), plus les semaines pour le rembourser avec ce qu’il rapporte. Le plus petit score passe en premier.</li>' +
+    '<li><b>Les dépendances sont incluses :</b> un achat comprend ce qu’il faut avant (le club-house pour la meth). La boîte de nuit ne vaut que si tu as des business pour la remplir (bunker, MC, entrepôt PDG).</li>' +
+    '<li><b>Mis à part :</b> le gratuit passe toujours en tête ; ce qui mettrait plus de 2 ans à se rembourser, et ce qui ne rapporte rien, est rangé en bas.</li></ol>' +
+    '<p class="small muted">Les gains viennent des moyennes de l’appli (voir les fiches) : c’est un classement indicatif. Il change dès que tu coches quelque chose, que ton solde bouge ou que tu modifies ton temps de jeu. Le mode groupe ajoute les braquages à plusieurs.</p></details>';
   h += '<div class="grid" style="margin-top:16px"><div class="card s6"><h2>À éviter</h2><ul class="avoid">' + AVOID.map(([t,d]) => '<li><b>' + esc(t) + '</b><span class="small muted">' + esc(d) + '</span></li>').join('') + '</ul></div>' +
     '<div class="card s6"><h2>Règles d’or</h2><ol class="rules">' + RULES.map(r => '<li>' + esc(r) + '</li>').join('') + '</ol></div></div>';
   return h;
@@ -661,7 +781,9 @@ function renderFiche(id){
   const allIds = [p.id].concat(kids.map(k => k.id));
   const acts = ACTS.filter(a => a.req.some(r => allIds.includes(r)));
   const pass = PASSIVE.filter(x => x.req === p.id);
-  const rd = roadIndex(p.id);
+  const PO = purchaseOptions();
+  const ri = PO.ranked.findIndex(o => o.missing.includes(p.id));
+  const inSlow = PO.slow.find(o => o.missing.includes(p.id)), inComfort = PO.comfort.find(o => o.missing.includes(p.id));
   let h = '<a class="crumb" href="#fiches">← Toutes les fiches</a>';
   h += head(esc(p.name), '', '<div class="row"><span class="pill">' + esc(catName(p.cat)) + '</span><span class="pill solid">' + priceTxt(p) + '</span>' + (own(p.id) ? '<span class="pill ok">✓ Possédé</span>' : '') + '</div>');
   h += '<div class="grid"><div class="stack s8">';
@@ -672,7 +794,9 @@ function renderFiche(id){
   if (subs.length) h += '<div class="card"><h2>Ce qu’il débloque</h2><div class="checks">' + subs.map(k => propRow(k, 0)).join('') + '</div></div>';
   h += '</div><div class="stack s4">';
   h += '<div class="card"><h2>En bref</h2><div class="checks">' + propRow(p, 0, true) + '</div>' +
-    (rd ? '<p class="small" style="margin:10px 0 0"><span class="muted">Plan d’achat :</span> <a href="#achats">étape ' + (rd.i + 1) + ', ' + esc(rd.step.title) + '</a>' + (rd.step.done ? ' · <span class="money">acquise</span>' : '') + '</p>' : '') +
+    (ri >= 0 ? '<p class="small" style="margin:10px 0 0"><span class="muted">Plan d’achat :</span> <a href="#achats">n° ' + (ri + 1) + ' de ton classement</a>' + (PO.ranked[ri].cost ? ' · ≈ +' + short(PO.ranked[ri].gain) + '/sem., remboursé en ' + weeksTxt(PO.ranked[ri].payback) : '') + '</p>'
+      : inSlow ? '<p class="small" style="margin:10px 0 0"><span class="muted">Plan d’achat :</span> pas rentable à ton rythme (remboursé en ' + weeksTxt(inSlow.payback) + ').</p>'
+      : inComfort ? '<p class="small" style="margin:10px 0 0"><span class="muted">Plan d’achat :</span> confort, sans gain direct dans le calcul.</p>' : '') +
     (f.avis ? '<p style="margin:10px 0 0"><b>Notre avis :</b> ' + esc(f.avis) + '</p>' : '') + '</div>';
   if (pass.length) h += '<div class="card"><h2>Revenu passif</h2>' + pass.map(x => {
     const mine = passiveRate(x);
@@ -915,9 +1039,9 @@ view.addEventListener('click', e => {
   else if (act === 'cancel-complete'){ ui.completing = null; render(); }
   else if (act === 'act-timer'){ const a = ACT[id]; if (a && a.cd){ startTimer('Recharge ' + a.name, a.cd, a.id); commit(); } }
   else if (act === 'buy'){
-    const s = roadmap().find(x => x.id === id); if (!s) return;
-    if (state.settings.deduct && s.cost) state.cash = Math.max(0, state.cash - s.cost);
-    s.props.forEach(pid => setOwned(pid, true));
+    const o = findOption(id); if (!o) return;
+    if (state.settings.deduct && o.cost) state.cash = Math.max(0, state.cash - o.cost);
+    o.missing.forEach(pid => setOwned(pid, true));
     commit();
   }
   else if (act === 'preset'){ const p = PRESETS[+b.dataset.i]; if (p){ startTimer(p.label, p.min, p.act); commit(); } }
@@ -973,7 +1097,7 @@ view.addEventListener('change', e => {
     setOwned(el.dataset.level, +el.value); commit();
   } else if (el.dataset.setting){
     const k = el.dataset.setting;
-    state.settings[k] = k === 'gtaplus' ? el.value === '1' : el.value; commit();
+    state.settings[k] = k === 'gtaplus' ? el.value === '1' : k === 'hours' ? +el.value : el.value; commit();
   } else if (el.dataset.settingBool){
     state.settings[el.dataset.settingBool] = el.checked; commit();
   } else if (el.dataset.ui === 'sound'){

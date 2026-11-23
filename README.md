@@ -27,6 +27,18 @@ Pour passer tes données d’un appareil à l’autre : **Mon empire → Sauvega
 
 Tu peux aussi télécharger un fichier de sauvegarde et le réimporter plus tard.
 
+## Plan d’achat dynamique
+
+L’onglet Achats classe tous les achats possibles selon le temps qu’il faut pour qu’ils soient rentabilisés :
+
+1. L’appli simule ta semaine. Elle découpe ton temps de jeu (réglage « Je joue par semaine ») en sessions de 2 h et calcule tes gains comme le plan de session : 1ers runs, recharges, limites. Elle ajoute tes revenus passifs, moins le temps passé à vendre.
+2. Pour chaque achat, elle refait la simulation comme si tu l’avais. La différence donne ce qu’il te rapporterait en plus par semaine.
+3. Score = semaines pour réunir l’argent (depuis ton solde, à ton revenu actuel) + semaines pour le rembourser. Le plus petit score passe en premier.
+
+Un achat comprend ses prérequis (le club-house pour un business de MC, par exemple). Une amélioration n’est proposée qu’une fois la propriété achetée. La boîte de nuit ne vaut que si tu as des business pour la remplir. Ce qui mettrait plus de 2 ans à se rembourser, ou ne rapporte rien (sécurité, véhicules), est rangé à part.
+
+Les gains et les durées utilisés sont dans `data.js` (`pay`, `first`, `dur`, `cd` pour les activités, `low` pour le passif) : les corriger change le classement.
+
 ## Bonus de la semaine (bouton « Sync »)
 
 Les bonus changent chaque jeudi vers 11 h (heure de Paris). Une tâche automatique GitHub ([.github/workflows/bonus.yml](.github/workflows/bonus.yml)) lance [scripts/update-bonus.mjs](scripts/update-bonus.mjs) le jeudi à 12 h 30, avec deux rattrapages (jeudi 17 h, vendredi 10 h). Le script lit la page publique des bonus hebdo de [GTA Boss](https://www.gtaboss.gg/gta-5-online/gta-online-weekly-updates), écrit `bonus.json`, puis republie le site.

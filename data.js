@@ -160,7 +160,7 @@ const PROPS = [
    what:'Entrepôt alimenté par tes autres business, plus un coffre de popularité.',
    fiche:{
      quoi:'Une boîte de nuit avec un grand entrepôt au sous-sol (mise à jour After Hours).',
-     sert:'Grâce aux techniciens, l’entrepôt accumule gratuitement une partie de la production de tes autres business (bunker, MC, PDG, labo d’acide…), sans fournitures. Le coffre se remplit selon la popularité de la boîte.',
+     sert:'Grâce aux techniciens, l’entrepôt accumule gratuitement une partie de la production de tes autres business, sans fournitures : bunker, business de MC (cocaïne, meth, faux billets, cannabis, faux papiers) et entrepôt de marchandises PDG. Le labo d’acide ne l’alimente pas. Le coffre se remplit selon la popularité de la boîte.',
      obtenir:'Sur le site Maze Bank Foreclosures.',
      conseils:['Chaque technicien s’occupe d’une seule marchandise : affecte-les à celles des business que tu possèdes.',
        'La popularité baisse avec le temps : remonte-la avec les missions de promotion depuis l’ordinateur de la boîte.',
@@ -168,7 +168,7 @@ const PROPS = [
      avis:'Excellent, mais seulement quand tu as déjà plusieurs business pour l’alimenter.'}},
   {id:'nc_techs', cat:'passif', parent:'nightclub', kind:'up', name:'Techniciens d’entrepôt en plus', max:4,
    unitPrices:[141000,184500,240500,312000], approx:true,
-   what:'1 technicien est fourni, jusqu’à 4 de plus. Un technicien par marchandise : sans eux, l’entrepôt produit peu.'},
+   what:'1 technicien est fourni, jusqu’à 4 de plus. Un technicien par marchandise, et seulement pour les business que tu possèdes (bunker, MC, entrepôt PDG).'},
   {id:'nc_equip', cat:'passif', parent:'nightclub', kind:'up', name:'Équipement (boîte de nuit)', price:1425000, approx:true,
    what:'Accélère la production de l’entrepôt. La seule des trois améliorations qui augmente les gains de l’entrepôt.'},
   {id:'nc_staff', cat:'passif', parent:'nightclub', kind:'up', name:'Personnel (boîte de nuit)', price:475000, approx:true,
@@ -312,7 +312,7 @@ const ACTS = [
    fiche:{quoi:'Le contrat VIP de l’agence : retrouver les morceaux inédits volés à Dr. Dre. Une suite de missions d’enquête et de préparation, puis une finale.',
      etapes:['Termine au moins un contrat de sécurité.','Lance le contrat VIP depuis l’ordinateur de l’agence.','Enchaîne les missions d’enquête et de préparation.','Joue la finale avec Dr. Dre.'],
      conseils:['Le paiement tombe à la finale : ne quitte pas en cours de route.','Alterne-le avec Cayo pendant ses 144 min de recharge.']}},
-  {id:'cayo', name:'Braquage de Cayo Perico', req:['kosatka'], solo:true, dur:85, durFast:60, fastReq:'sparrow', pay:700000,
+  {id:'cayo', name:'Braquage de Cayo Perico', req:['kosatka'], solo:true, dur:85, durFast:60, fastReq:'sparrow', pay:800000,
    payTxt:'≈ 0,55–1,1 M$ selon la cible', cd:144, cdTxt:'144 min en solo',
    tip:'Entre par le tunnel de drainage et prends la cible secondaire la plus chère. Les cibles principales changent chaque semaine.',
    fiche:{quoi:'Le braquage du domaine d’El Rubio, un baron de la drogue, sur l’île de Cayo Perico. Tu repères l’île, prépares ton approche, puis voles la cible principale et des cibles secondaires.',
@@ -324,13 +324,13 @@ const ACTS = [
    fiche:{quoi:'Le braquage de la mise à jour Oscar Guzman Flies Again (2025), lancé depuis le hangar de McKenzie Field.',
      etapes:['Lance les préparations depuis le hangar.','Fais les préparations.','Joue la finale, en normal ou en difficile.'],
      conseils:['Le mode difficile paie 50 % de plus.','Bonus de 1re réalisation hebdo : jusqu’à 1,125 M$ en difficile.']}},
-  {id:'cluckin', name:'Cluckin’ Bell Farm Raid', req:[], solo:true, dur:50, pay:400000, first:600000,
+  {id:'cluckin', name:'Cluckin’ Bell Farm Raid', req:[], solo:true, dur:70, pay:400000, first:600000,
    payTxt:'400 k$ · 1er run de la semaine 600 k$', cd:60, cdTxt:'≈ 1 h', weekly:'w_cluckin',
    tip:'Gratuit : il se lance via un appel de Vincent Effenburger.',
    fiche:{quoi:'Le raid sur l’usine de la ferme Cluckin’ Bell (2024), avec Vincent Effenburger. Une suite de missions qui finit par une grosse finale. Aucune propriété nécessaire.',
      etapes:['Lance-le via Vincent Effenburger (appel téléphonique).','Enchaîne les missions de préparation.','Joue la finale, Scene of the Crime.'],
      conseils:['C’est l’argent le plus facile pour un nouveau joueur.','600 k$ au 1er run de chaque semaine.']}},
-  {id:'knoway', name:'KnoWay Out (A Clean Break)', req:[], solo:true, dur:30, pay:245000, first:455700, once:true,
+  {id:'knoway', name:'KnoWay Out (A Clean Break)', req:[], solo:true, dur:40, pay:245000, first:455700, once:true,
    payTxt:'245 k$ normal / 368 k$ difficile · 1er run de la semaine 456 k$ / 684 k$', cd:0, cdTxt:'—', weekly:'w_knoway',
    tip:'Gratuit : téléphone public de Little Seoul. Tente le difficile pour +50 %.',
    fiche:{quoi:'Un braquage gratuit dont la finale s’appelle A Clean Break. Il se lance depuis un téléphone public de Little Seoul.',
@@ -404,7 +404,7 @@ const PASSIVE = [
   {req:'weed', ups:['weed_equip','weed_staff'], name:'Cannabis', full:'≈ 315 k$', low:36500, high:36500, note:'+35 % avec Smoke on the Water.'},
   {req:'docs', ups:['docs_equip','docs_staff'], name:'Faux papiers', full:'≈ 158 k$', low:22500, high:22500, note:'Le moins rentable.'},
   {req:'agency', name:'Coffre de l’agence', full:'250 k$ max', low:0, high:0, note:'Rapporte plus à mesure que tu termines des contrats de sécurité.'},
-  {req:'carwash', name:'Car Wash, blanchiment', full:'—', low:15000, high:37500, note:'≈ 30 k$ par jour de jeu si tu as beaucoup de business. Surveille la jauge de soupçon.'}
+  {req:'carwash', scale:true, name:'Car Wash, blanchiment', full:'—', low:15000, high:37500, note:'≈ 30 k$ par jour de jeu si tu as beaucoup de business. Surveille la jauge de soupçon.'}
 ];
 
 const ROADMAP = [
@@ -436,7 +436,7 @@ const ROADMAP = [
    why:'Une production passive fiable pendant tes braquages, qui alimente aussi la boîte de nuit. Sans l’équipement et le personnel, il rapporte beaucoup moins. La sécurité n’est pas utile.',
    unlocks:'≈ 1 M$ par stock plein'},
   {id:'nightclub', title:'Boîte de nuit + 4 techniciens', props:['nightclub','nc_techs'],
-   why:'Seulement maintenant : elle revend ce que produisent tes autres business, sans réapprovisionnement. Les techniciens comptent plus que les améliorations de la boîte.',
+   why:'Elle revend ce que produisent ton bunker, tes business de MC et ton entrepôt PDG, sans réapprovisionnement. Sans eux, elle ne rapporte presque rien. Les techniciens comptent plus que les améliorations de la boîte.',
    unlocks:'≈ 1,8 M$ par entrepôt plein'},
   {id:'coke', title:'Club-house + cocaïne + améliorations', props:['clubhouse','coke','coke_equip','coke_staff'],
    why:'Un fournisseur de plus pour la boîte de nuit, et des ventes rapides via les dealers de rue.',
