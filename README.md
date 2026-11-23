@@ -29,21 +29,21 @@ Tu peux aussi télécharger un fichier de sauvegarde et le réimporter plus tard
 
 ## Emplacements et carte
 
-Chaque fiche de bâtiment liste tous ses emplacements achetables avec leur prix (143 au total, source : tableaux « Locations » de gta.wiki, novembre 2026) et les place sur un petit plan. « Mon emplacement » sous le tableau indique lequel tu possèdes : il est entouré sur les cartes.
+Chaque fiche de bâtiment liste tous ses emplacements achetables avec leur prix (167 au total, dont 32 logements avec salle de braquage, source : tableaux « Locations » de gta.wiki, novembre 2026) et les place sur un petit plan. « Mon emplacement » sous le tableau indique lequel tu possèdes : il est entouré sur les cartes.
 
 L’onglet **Carte** montre tous les bâtiments, un type à la fois ou seulement les tiens. C’est un plan schématique dessiné pour l’appli, sans la carte officielle de Rockstar : les positions sont approximatives, au niveau du quartier. Les quartiers et le tracé sont dans `data.js` (`AREAS`, `MAP`).
 
-## Plan d’achat dynamique
+## Plan d’achat
 
-L’onglet Achats classe tous les achats possibles selon le temps qu’il faut pour qu’ils soient rentabilisés :
+L’onglet Achats juge chaque achat sur ce qu’il débloque, avec les mêmes gains par heure que l’onglet Méthodes :
 
-1. L’appli simule ta semaine. Elle découpe ton temps de jeu (réglage « Je joue par semaine ») en sessions de 2 h et calcule tes gains comme le plan de session : 1ers runs, recharges, limites. Elle ajoute tes revenus passifs, moins le temps passé à vendre.
-2. Pour chaque achat, elle refait la simulation comme si tu l’avais. La différence donne ce qu’il te rapporterait en plus par semaine.
-3. Score = semaines pour réunir l’argent (depuis ton solde, à ton revenu actuel) + semaines pour le rembourser. Le plus petit score passe en premier.
+- **Braquages et activités** : prix ÷ gain par heure de la meilleure activité débloquée = **heures de jeu pour le rembourser**. Exemple : Kosatka 2,2 M$ ÷ Cayo ≈ 565 k$/h ≈ 3 h 54. Le Sparrow, qui accélère Cayo, est jugé sur le gain par heure en plus.
+- **Business passifs** : prix ÷ revenu passif en plus = heures connecté pour le rembourser.
+- **Confort** : ce qui ne rapporte rien directement (sécurité, véhicules…).
 
-Un achat comprend ses prérequis (le club-house pour un business de MC, par exemple). Une amélioration n’est proposée qu’une fois la propriété achetée. La boîte de nuit ne vaut que si tu as des business pour la remplir. Ce qui mettrait plus de 2 ans à se rembourser, ou ne rapporte rien (sécurité, véhicules), est rangé à part.
+Chaque liste va du plus vite remboursé au plus lent. Les prérequis sont inclus dans le prix (le club-house pour un business de MC). Une amélioration n’apparaît qu’une fois la propriété achetée. Le réglage « Je joue par semaine » sert seulement à traduire les heures en semaines.
 
-Les gains et les durées utilisés sont dans `data.js` (`pay`, `first`, `dur`, `cd` pour les activités, `low` pour le passif) : les corriger change le classement.
+Les gains et durées utilisés sont dans `data.js` (`pay`, `first`, `dur` pour les activités, `low` pour le passif) : les corriger change le classement.
 
 ## Bonus de la semaine (bouton « Sync »)
 

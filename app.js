@@ -382,29 +382,6 @@ function buildPlan(budget){
 }
 function ratePerHour(){ const p = buildPlan(120); return p.minutes ? p.total / (p.minutes/60) : 0; }
 
-/* Semaine simulée : ton temps de jeu découpé en sessions de 2 h (même calcul que le plan),
-   les 1ers runs une seule fois, plus le revenu passif pendant que tu es connecté,
-   moins le temps passé à vendre (≈ 3 min par tranche de 100 k$, valorisé à ton gain moyen par minute). */
-function weeklyIncome(O){
-  const hours = +state.settings.hours || 10;
-  let remaining = Math.round(hours * 60), active = 0, salvage = 0;
-  const done = {};
-  while (remaining >= 30){
-    const len = Math.min(120, remaining); remaining -= len;
-    const p = planCore(len, {O, done, salvage, timers:[], noClose:true});
-    active += p.total;
-    p.steps.forEach(st => {
-      if (st.kind !== 'act') return;
-      if (st.first && st.act.weekly) done[st.act.weekly] = true;
-      if (st.act.id === 'salvage') salvage += st.n;
-    });
-  }
-  const gross = passiveLow(O) * hours;
-  const sellCost = gross / 100000 * 3 * (active / Math.max(1, hours * 60));
-  const passive = gross - sellCost;
-  return {active, passive, total: active + passive};
-}
-
 /* Achats possibles : les étapes de data.js (ROADMAP) + tous les autres business et améliorations. */
 function bundlesList(){
   const groupe = state.settings.mode === 'groupe';
@@ -428,12 +405,14 @@ function bundlesList(){
   });
   return list;
 }
+/* Plan d'achat : chaque achat est jugé sur ce qu'il débloque, avec les mêmes gains par heure
+   que l'onglet Méthodes. Heures pour rembourser = prix ÷ gain par heure. */
+function actRate(a, O){ const d = (a.fastReq && O.own(a.fastReq)) ? a.durFast : a.dur; return a.pay / d * 60; }
 let optCache = {key:'', val:null};
 function purchaseOptions(){
-  const key = JSON.stringify([state.owned, state.cash, state.settings.mode, state.settings.pace, state.settings.hours]);
+  const key = JSON.stringify([state.owned, state.settings.mode]);
   if (optCache.key === key) return optCache.val;
-  const base = weeklyIncome(curO());
-  const perWeek = Math.max(base.total, 1);
+  const O0 = curO(), p0 = passiveLow(O0);
   const seen = new Set(), opts = [];
   bundlesList().forEach(b => {
     if (b.items.every(id => PROP[id].kind === 'up') && b.items.some(id => !own(PROP[id].parent))) return;
@@ -447,31 +426,59 @@ function purchaseOptions(){
     const cost = sum(missing.map(id => missingCost(PROP[id])));
     const map = Object.assign({}, state.owned);
     missing.forEach(id => setOwnedIn(map, id, true));
-    const gain = weeklyIncome(makeO(map)).total - base.total;
-    const save = Math.max(0, cost - state.cash) / perWeek;
-    const payback = cost ? (gain > 0 ? cost / gain : Infinity) : 0;
+    const O1 = makeO(map);
+    const unlocked = ACTS.filter(a => available(a, O1) && !available(a, O0)).map(a => ({a, rate: actRate(a, O1)})).sort((x, y) => y.rate - x.rate);
+    const faster = ACTS.filter(a => available(a, O0) && available(a, O1)).map(a => ({a, rate: actRate(a, O1) - actRate(a, O0)})).filter(x => x.rate > 1).sort((x, y) => y.rate - x.rate);
+    const passive = passiveLow(O1) - p0;
+    let kind = 'confort', rate = 0, act = null, isFaster = false;
+    if (unlocked.length){ kind = 'actif'; rate = unlocked[0].rate; act = unlocked[0].a; }
+    else if (faster.length){ kind = 'actif'; rate = faster[0].rate; act = faster[0].a; isFaster = true; }
+    else if (passive > 1){ kind = 'passif'; rate = passive; }
     opts.push(Object.assign({}, b, {
       title: b.title || missing.map(id => PROP[id].name).join(' + '),
-      missing, cost, gain, save, payback, score: save + payback, main: b.main || missing[0]
+      missing, cost, kind, rate, act, isFaster, passive: passive > 1 ? passive : 0,
+      others: unlocked.slice(1).map(x => x.a),
+      hours: cost ? (rate > 0 ? cost / rate : Infinity) : 0,
+      main: b.main || missing[0]
     }));
   });
-  opts.sort((x, y) => (x.cost ? 1 : 0) - (y.cost ? 1 : 0) || x.score - y.score || x.order - y.order);
+  const by = (x, y) => (x.cost ? 1 : 0) - (y.cost ? 1 : 0) || x.hours - y.hours || x.order - y.order;
   const val = {
-    base,
-    ranked: opts.filter(o => !o.cost || (o.gain > 0 && o.payback <= 104)),
-    slow: opts.filter(o => o.cost && o.gain > 0 && o.payback > 104),
-    comfort: opts.filter(o => o.cost && !(o.gain > 0))
+    actif: opts.filter(o => !o.cost || o.kind === 'actif').sort(by),
+    passif: opts.filter(o => o.cost && o.kind === 'passif').sort(by),
+    confort: opts.filter(o => o.cost && o.kind === 'confort').sort((x, y) => x.cost - y.cost)
   };
+  val.all = val.actif.concat(val.passif, val.confort);
+  val.next = val.actif[0] || val.passif[0] || null;
   optCache = {key, val};
   return val;
 }
-function findOption(id){ const o = purchaseOptions(); return o.ranked.concat(o.slow, o.comfort).find(x => x.id === id) || null; }
-function weeksTxt(w){
-  if (!isFinite(w)) return 'jamais';
-  if (w <= 0) return 'tout de suite';
-  if (w < 1) return 'moins d’une semaine';
-  if (w < 10){ const r = Math.round(w * 10) / 10; return '≈ ' + r.toLocaleString('fr-FR') + ' semaine' + (r >= 2 ? 's' : ''); }
-  return '≈ ' + Math.round(w) + ' semaines';
+function findOption(id){ return purchaseOptions().all.find(x => x.id === id) || null; }
+function hoursTxt(h){ return !isFinite(h) ? '—' : h <= 0 ? 'tout de suite' : '≈ ' + dmin(h * 60); }
+function weeksAt(h){
+  const per = +state.settings.hours || 10, w = h / per;
+  if (!isFinite(w)) return '';
+  if (w < 1) return 'moins d’une semaine à ' + per + ' h/sem.';
+  const r = Math.round(w * 10) / 10;
+  return '≈ ' + r.toLocaleString('fr-FR') + ' semaine' + (r >= 2 ? 's' : '') + ' à ' + per + ' h/sem.';
+}
+/* Ce que l'achat débloque, en une ligne */
+function unlockLine(o){
+  if (!o.cost) return 'Gratuit : à faire tout de suite.';
+  if (o.kind === 'actif'){
+    const a = o.act;
+    return (o.isFaster ? 'Accélère ' : 'Débloque ') + '<a href="#activite-' + a.id + '">' + esc(a.name) + '</a> : <b class="money">≈ ' + (o.isFaster ? '+' : '') + short(o.rate) + '/h</b>' +
+      (o.isFaster ? ' pendant ce braquage' : '') +
+      (o.others.length ? ' <span class="muted">(et aussi : ' + o.others.map(x => esc(x.name)).join(', ') + ')</span>' : '');
+  }
+  if (o.kind === 'passif') return 'Rapporte en passif : <b class="money">≈ +' + short(o.rate) + '/h</b> tant que tu es connecté';
+  return 'Aucun gain direct dans le calcul.';
+}
+function paybackLine(o){
+  if (!o.cost || o.kind === 'confort') return '';
+  let t = 'Remboursé en <b>' + hoursTxt(o.hours) + '</b> ' + (o.kind === 'passif' ? 'connecté' : 'de cette activité') + ' <span class="muted">(' + weeksAt(o.hours) + ')</span>';
+  if (o.kind === 'actif' && !o.isFaster && o.act.first) t += '<br><span class="muted">Ou ≈ ' + Math.max(1, Math.round(o.cost / o.act.first)) + ' semaine(s) en ne faisant que le 1er run hebdo (' + short(o.act.first) + ').</span>';
+  return t;
 }
 
 /* ======================================================================
@@ -539,7 +546,7 @@ function bonusCard(compact){
 function renderDash(P){
   const owned = PROPS.filter(p => own(p.id)).length;
   const PO = purchaseOptions();
-  const next = PO.ranked[0] || null;
+  const next = PO.next;
   const rate = ratePerHour();
   const wItems = weeklyItems(), wDone = wItems.filter(weeklyDone).length;
   const dItems = dailyItems(), dDone = dItems.filter(it => state.daily.done[it.id]).length;
@@ -571,12 +578,12 @@ function renderDash(P){
       '<div class="row between"><b style="font-size:20px">' + esc(next.title) + '</b><span class="money" style="font-size:18px">' + (next.cost ? short(next.cost) : 'Gratuit') + '</span></div>' +
       (partial ? '<p class="small muted" style="margin:4px 0 0">Il te reste : ' + next.missing.map(id => esc(PROP[id].name)).join(', ') + '.</p>' : '') +
       '<p class="small" style="margin:6px 0 8px;max-width:65ch">' + esc(next.why) + '</p>' +
-      (next.cost ? '<p class="small" style="margin:0 0 8px">Rapporte <b class="money">≈ +' + short(next.gain) + '/semaine</b> · remboursé en <b>' + weeksTxt(next.payback) + '</b></p>' +
+      (next.cost ? '<p class="small" style="margin:0 0 8px">' + unlockLine(next) + '<br>' + paybackLine(next) + '</p>' +
         '<div class="meter money" role="img" aria-label="' + pct + ' % du prix"><i style="width:' + pct + '%"></i></div>' +
         '<p class="small" style="margin:8px 0 0">' + (miss ? 'Il te manque <b class="money">' + fmt(miss) + '</b>, soit ≈ <b>' + dmin(miss / Math.max(rate, 1) * 60) + '</b> de jeu à ton rythme actuel.' : '<b class="money">Tu as de quoi l’acheter.</b> Fonce, sauf s’il est annoncé en promo jeudi.') + '</p>' : '') +
       '<div class="row" style="margin-top:12px"><a class="btn primary" href="#achats">Voir le classement</a><a class="btn ghost" href="#fiche-' + ficheOf(next.main) + '">Lire la fiche</a></div></div>';
   } else {
-    h += '<div class="card s7 hot"><h2>Prochain achat</h2><p style="margin:0">Plus aucun achat rentable à ton rythme. Il ne reste qu’à optimiser ta semaine.</p></div>';
+    h += '<div class="card s7 hot"><h2>Prochain achat</h2><p style="margin:0">Plus aucun achat ne rapporte davantage. Il ne reste qu’à optimiser ta semaine.</p></div>';
   }
   const wTop = wItems.filter(it => !weeklyDone(it)).slice(0,5);
   h += '<div class="card s6"><h2>Cette semaine <small>' + wDone + '/' + wItems.length + ' faits</small></h2>' +
@@ -713,45 +720,42 @@ function chip(p){
   const st = p.max ? lvl(p.id) + '/' + p.max + ' · ' : '';
   return '<a class="mreq' + (full(p.id) ? ' ok' : '') + '" href="#fiche-' + ficheOf(p.id) + '">' + (full(p.id) ? '✓ ' : '') + esc(p.name) + ' · ' + st + priceTxt(p) + '</a>';
 }
-function optionMetrics(o){
-  if (!o.cost) return '<span class="small"><b class="money">Gratuit</b> · à faire tout de suite</span>';
-  return '<span class="small">Rapporte <b class="money">≈ +' + short(o.gain) + '/sem.</b></span>' +
-    '<span class="small">Achetable <b>' + (o.save > 0 ? 'dans ' + weeksTxt(o.save) : 'maintenant') + '</b></span>' +
-    '<span class="small">Remboursé en <b>' + weeksTxt(o.payback) + '</b></span>';
+function optionRow(o, i, first){
+  const partial = o.items.length > o.missing.length;
+  const miss = Math.max(0, o.cost - state.cash);
+  return '<li class="' + (first ? 'next' : 'later') + '"><span class="n">' + (i + 1) + '</span><div>' +
+    '<div class="row between"><h3>' + esc(o.title) + '</h3>' + (first ? '<span class="pill next">Prochain</span>' : '') + '<span class="money">' + (o.cost ? short(o.cost) : 'Gratuit') + '</span></div>' +
+    '<p class="small" style="margin-top:6px">' + unlockLine(o) + (paybackLine(o) ? '<br>' + paybackLine(o) : '') + '</p>' +
+    '<p class="small muted">' + esc(o.why) + '</p>' +
+    '<div class="props">' + o.items.map(id => chip(PROP[id])).join('') + '</div>' +
+    '<div class="foot">' + (partial ? '<span class="small muted">Il te reste : ' + o.missing.map(id => esc(PROP[id].name)).join(', ') + '</span>' : '') +
+    (o.cost ? '<span class="small">' + (miss ? 'Il te manque <b class="money">' + short(miss) + '</b>' : '<b class="money">Dans tes moyens</b>') + '</span>' : '') +
+    '<a class="btn sm ghost" href="#fiche-' + ficheOf(o.main) + '">Fiche</a>' +
+    '<button class="btn sm' + (first ? ' primary' : '') + '" data-act="buy" data-id="' + o.id + '">' + (o.cost ? 'Je l’ai acheté' : 'C’est fait') + '</button></div></div></li>';
 }
 function renderAchats(){
-  const {base, ranked, slow, comfort} = purchaseOptions();
+  const {actif, passif, confort, next} = purchaseOptions();
   const hours = state.settings.hours || 10;
-  let h = head('Plan d’achat', 'Classé pour toi : en premier, ce qui sera rentabilisé le plus vite d’après ce que tu possèdes, ton solde et ton temps de jeu. Le classement se met à jour à chaque changement.',
+  let h = head('Plan d’achat', 'Chaque achat est jugé sur ce qu’il débloque, avec les mêmes gains par heure que l’onglet Méthodes. En premier : ce qui se rembourse le plus vite.',
     '<div style="min-width:min(220px,100%)">' + selectField('hours', 'Je joue par semaine', HOURS_OPTS.map(([v,l]) => [String(v), l]), String(hours)) + '</div>');
-  h += '<div class="grid" style="margin-bottom:14px"><div class="card s7"><h2>Ton revenu estimé <small>' + hours + ' h de jeu par semaine</small></h2>' +
-    '<div class="big money">≈ ' + short(base.total) + '<span class="muted" style="font-size:.45em"> /semaine</span></div>' +
-    '<p class="small muted" style="margin:6px 0 0">Actif ≈ ' + short(base.active) + ' · passif ≈ ' + short(base.passive) + '. C’est la base qui sert à comparer chaque achat.</p></div>' +
+  h += '<div class="grid" style="margin-bottom:6px"><div class="card s7"><h2>Comment lire le classement</h2>' +
+    '<p class="small" style="margin:0">« Remboursé en 3 h 54 » veut dire : 3 h 54 de l’activité débloquée pour récupérer le prix. Exemple : le Kosatka coûte 2,2 M$ et Cayo rapporte ≈ 565 k$/h, donc ≈ 3 h 54 de Cayo pour le rembourser.</p></div>' +
     '<label class="toggle card s5" for="set-deduct"><input type="checkbox" id="set-deduct" data-setting-bool="deduct"' + (state.settings.deduct ? ' checked' : '') + '><span><b>Déduire le prix de mon solde</b><br><span class="small muted">Quand tu cliques sur « Je l’ai acheté ». Cocher dans Mon empire ne déduit rien.</span></span></label></div>';
-  h += ranked.length ? '<ol class="road">' + ranked.map((o, i) => {
-    const partial = o.items.length > o.missing.length;
-    return '<li class="' + (i === 0 ? 'next' : 'later') + '"><span class="n">' + (i + 1) + '</span><div>' +
-      '<div class="row between"><h3>' + esc(o.title) + '</h3>' + (i === 0 ? '<span class="pill next">Prochain</span>' : '') + '<span class="money">' + (o.cost ? short(o.cost) : 'Gratuit') + '</span></div>' +
-      '<div class="foot">' + optionMetrics(o) + '</div>' +
-      '<p class="small">' + esc(o.why) + '</p>' +
-      '<div class="props">' + o.items.map(id => chip(PROP[id])).join('') + '</div>' +
-      '<div class="foot">' + (o.unlocks ? '<span class="small"><span class="muted">Débloque :</span> ' + esc(o.unlocks) + '</span>' : '') +
-      (partial ? '<span class="small muted">Il te reste : ' + o.missing.map(id => esc(PROP[id].name)).join(', ') + '</span>' : '') +
-      '<button class="btn sm' + (i === 0 ? ' primary' : '') + '" data-act="buy" data-id="' + o.id + '">' + (o.cost ? 'Je l’ai acheté' : 'C’est fait') + '</button></div></div></li>';
-  }).join('') + '</ol>' : '<div class="card"><p style="margin:0">Plus aucun achat rentable à ton rythme. Bravo.</p></div>';
-  const compact = (list) => '<ul class="avoid">' + list.map(o => '<li><div class="row between"><b>' + esc(o.title) + '</b><span class="money">' + short(o.cost) + '</span></div>' +
-    '<span class="small muted">' + (o.gain > 0 ? '≈ +' + short(o.gain) + '/sem. · remboursé en ' + weeksTxt(o.payback) + ' · ' : '') + esc(o.why) + '</span>' +
-    '<div class="row" style="margin-top:6px"><a class="btn sm ghost" href="#fiche-' + ficheOf(o.main) + '">Fiche</a><button class="btn sm" data-act="buy" data-id="' + o.id + '">Je l’ai acheté</button></div></li>').join('') + '</ul>';
-  if (slow.length) h += '<details class="card more" style="margin-top:16px"><summary><b>Pas rentable à ton rythme</b> (' + slow.length + ') : plus de 2 ans pour se rembourser</summary>' + compact(slow) + '</details>';
-  if (comfort.length) h += '<details class="card more" style="margin-top:16px"><summary><b>Confort, sans gain direct</b> (' + comfort.length + ') : sécurité, véhicules…</summary>' +
-    '<p class="small muted">Ils ne changent pas tes gains dans le calcul. Certains font quand même gagner du temps (Oppressor Mk II).</p>' + compact(comfort) + '</details>';
+  h += '<h2 class="section-title">Braquages et activités</h2><p class="section-sub">Ce qui rapporte quand tu joues. Classé du plus vite remboursé au plus lent.</p>' +
+    (actif.length ? '<ol class="road">' + actif.map((o, i) => optionRow(o, i, o === next)).join('') + '</ol>' : '<div class="card"><p style="margin:0">Tu as déjà tout ce qui débloque une activité.</p></div>');
+  h += '<h2 class="section-title">Business passifs</h2><p class="section-sub">Ils rapportent en plus de tes sessions, tant que tu es connecté. Compare-les entre eux : leurs heures se cumulent avec celles des braquages.</p>' +
+    (passif.length ? '<ol class="road">' + passif.map((o, i) => optionRow(o, i, o === next)).join('') + '</ol>' : '<div class="card"><p style="margin:0">Rien de plus à acheter ici.</p></div>');
+  if (confort.length) h += '<details class="card more" style="margin-top:16px"><summary><b>Confort, sans gain direct</b> (' + confort.length + ') : sécurité, véhicules…</summary>' +
+    '<p class="small muted">Ils ne changent pas tes gains dans le calcul. Certains font quand même gagner du temps (Oppressor Mk II). La boîte de nuit arrive ici tant que tu n’as pas de business pour la remplir.</p>' +
+    '<ul class="avoid">' + confort.map(o => '<li><div class="row between"><b>' + esc(o.title) + '</b><span class="money">' + short(o.cost) + '</span></div><span class="small muted">' + esc(o.why) + '</span>' +
+      '<div class="row" style="margin-top:6px"><a class="btn sm ghost" href="#fiche-' + ficheOf(o.main) + '">Fiche</a><button class="btn sm" data-act="buy" data-id="' + o.id + '">Je l’ai acheté</button></div></li>').join('') + '</ul></details>';
   h += '<details class="card more" style="margin-top:16px"><summary><b>Comment ce classement est calculé</b></summary>' +
-    '<ol class="explain"><li><b>Ta semaine est simulée.</b> Ton temps de jeu (' + hours + ' h) est découpé en sessions de 2 h, avec le même calcul que le plan de session : 1ers runs de la semaine, recharges, limites (3 casses par semaine…). S’y ajoutent tes revenus passifs pendant que tu es connecté.</li>' +
-    '<li><b>Chaque achat est testé.</b> L’appli refait la simulation comme si tu l’avais déjà. La différence, c’est ce qu’il te rapporte en plus par semaine.</li>' +
-    '<li><b>Le score, c’est le temps avant qu’il soit rentabilisé :</b> les semaines pour réunir l’argent (en partant de ton solde, à ton revenu actuel), plus les semaines pour le rembourser avec ce qu’il rapporte. Le plus petit score passe en premier.</li>' +
-    '<li><b>Les dépendances sont incluses :</b> un achat comprend ce qu’il faut avant (le club-house pour la meth). La boîte de nuit ne vaut que si tu as des business pour la remplir (bunker, MC, entrepôt PDG).</li>' +
-    '<li><b>Mis à part :</b> le gratuit passe toujours en tête ; ce qui mettrait plus de 2 ans à se rembourser, et ce qui ne rapporte rien, est rangé en bas.</li></ol>' +
-    '<p class="small muted">Les gains viennent des moyennes de l’appli (voir les fiches) : c’est un classement indicatif. Il change dès que tu coches quelque chose, que ton solde bouge ou que tu modifies ton temps de jeu. Le mode groupe ajoute les braquages à plusieurs.</p></details>';
+    '<ol class="explain"><li><b>Ce que l’achat débloque.</b> Pour chaque achat possible, l’appli regarde la meilleure activité qu’il te donne en plus (le Kosatka débloque Cayo), ou ce qu’il accélère (le Sparrow rend Cayo plus rapide), ou le revenu passif qu’il ajoute.</li>' +
+    '<li><b>Son gain par heure.</b> Ce sont les mêmes chiffres que dans l’onglet Méthodes : gain d’un run ÷ durée du run, recharges non comptées.</li>' +
+    '<li><b>Les heures pour rembourser :</b> prix ÷ gain par heure. Le classement va du plus petit nombre d’heures au plus grand.</li>' +
+    '<li><b>Les prérequis sont inclus dans le prix</b> (le club-house pour la meth). Une amélioration n’apparaît qu’une fois la propriété achetée.</li>' +
+    '<li><b>Ton temps de jeu par semaine</b> sert seulement à traduire les heures en semaines.</li></ol>' +
+    '<p class="small muted">Le calcul ne tient pas compte de ce que tu possèdes déjà : si tu as l’agence, Cayo reste un excellent ajout, car tu enchaînes Dr. Dre et Cayo pendant leurs recharges. En mode solo, les braquages de groupe ne sont pas proposés.</p></details>';
   h += '<div class="grid" style="margin-top:16px"><div class="card s6"><h2>À éviter</h2><ul class="avoid">' + AVOID.map(([t,d]) => '<li><b>' + esc(t) + '</b><span class="small muted">' + esc(d) + '</span></li>').join('') + '</ul></div>' +
     '<div class="card s6"><h2>Règles d’or</h2><ol class="rules">' + RULES.map(r => '<li>' + esc(r) + '</li>').join('') + '</ol></div></div>';
   return h;
@@ -901,8 +905,10 @@ function renderFiche(id){
   const acts = ACTS.filter(a => a.req.some(r => allIds.includes(r)));
   const pass = PASSIVE.filter(x => x.req === p.id);
   const PO = purchaseOptions();
-  const ri = PO.ranked.findIndex(o => o.missing.includes(p.id));
-  const inSlow = PO.slow.find(o => o.missing.includes(p.id)), inComfort = PO.comfort.find(o => o.missing.includes(p.id));
+  const opt = PO.all.find(o => o.missing.includes(p.id));
+  const list = opt ? (!opt.cost || opt.kind === 'actif' ? PO.actif : opt.kind === 'passif' ? PO.passif : null) : null;
+  const rankTxt = !opt ? '' : !list ? 'confort, sans gain direct dans le calcul.'
+    : '<a href="#achats">n° ' + (list.indexOf(opt) + 1) + ' des ' + (list === PO.passif ? 'business passifs' : 'braquages et activités') + '</a>' + (opt.cost ? ' · remboursé en ' + hoursTxt(opt.hours) + (opt.kind === 'passif' ? ' connecté' : ' de jeu') : '');
   let h = '<a class="crumb" href="#fiches">← Toutes les fiches</a>';
   h += head(esc(p.name), '', '<div class="row"><span class="pill">' + esc(catName(p.cat)) + '</span><span class="pill solid">' + priceTxt(p) + '</span>' + (own(p.id) ? '<span class="pill ok">✓ Possédé</span>' : '') + '</div>');
   h += '<div class="grid"><div class="stack s8">';
@@ -914,9 +920,7 @@ function renderFiche(id){
   if (subs.length) h += '<div class="card"><h2>Ce qu’il débloque</h2><div class="checks">' + subs.map(k => propRow(k, 0)).join('') + '</div></div>';
   h += '</div><div class="stack s4">';
   h += '<div class="card"><h2>En bref</h2><div class="checks">' + propRow(p, 0, true) + '</div>' +
-    (ri >= 0 ? '<p class="small" style="margin:10px 0 0"><span class="muted">Plan d’achat :</span> <a href="#achats">n° ' + (ri + 1) + ' de ton classement</a>' + (PO.ranked[ri].cost ? ' · ≈ +' + short(PO.ranked[ri].gain) + '/sem., remboursé en ' + weeksTxt(PO.ranked[ri].payback) : '') + '</p>'
-      : inSlow ? '<p class="small" style="margin:10px 0 0"><span class="muted">Plan d’achat :</span> pas rentable à ton rythme (remboursé en ' + weeksTxt(inSlow.payback) + ').</p>'
-      : inComfort ? '<p class="small" style="margin:10px 0 0"><span class="muted">Plan d’achat :</span> confort, sans gain direct dans le calcul.</p>' : '') +
+    (rankTxt ? '<p class="small" style="margin:10px 0 0"><span class="muted">Plan d’achat :</span> ' + rankTxt + '</p>' : '') +
     (f.avis ? '<p style="margin:10px 0 0"><b>Notre avis :</b> ' + esc(f.avis) + '</p>' : '') + '</div>';
   if (pass.length) h += '<div class="card"><h2>Revenu passif</h2>' + pass.map(x => {
     const mine = passiveRate(x);
