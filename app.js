@@ -758,9 +758,9 @@ function renderAchats(){
 /* ---------- Fiches ---------- */
 function renderFiches(){
   const q = ui.q.trim().toLowerCase();
-  const match = name => !q || name.toLowerCase().includes(q);
+  const match = (name, extra) => !q || (name + ' ' + (extra || '')).toLowerCase().includes(q);
   const acts = ACTS.filter(a => match(a.name));
-  const props = PROPS.filter(p => p.fiche && p.cat !== 'vehicule' && match(p.name));
+  const props = PROPS.filter(p => p.fiche && p.cat !== 'vehicule' && match(p.name, p.alias));
   const vehs = PROPS.filter(p => p.fiche && p.cat === 'vehicule' && match(p.name));
   const card = (href, name, sub, pills) => '<a class="fcard" href="' + href + '"><b>' + esc(name) + '</b><span class="small muted">' + esc(sub) + '</span><span class="row">' + pills + '</span></a>';
   let h = head('Fiches', 'Chaque braquage, bâtiment et véhicule expliqué : ce que c’est, à quoi ça sert, comment l’obtenir et ce qu’il faut savoir.',
