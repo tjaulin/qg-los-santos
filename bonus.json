@@ -2,9 +2,9 @@
   "version": 1,
   "source": "GTA Boss",
   "sourceUrl": "https://www.gtaboss.gg/gta-5-online/gta-online-weekly-updates",
-  "title": "GTA Online Weekly Update – November 19, 2026",
-  "start": "2026-11-19T10:00:00.000Z",
-  "end": "2026-11-26T10:00:00.000Z",
+  "title": "GTA Online Weekly Update – November 26, 2026",
+  "start": "2026-11-26T10:00:00.000Z",
+  "end": "2026-12-03T10:00:00.000Z",
   "sections": [
     {
       "id": "bonus",
@@ -13,81 +13,44 @@
         "4X Freemode Challenges GTA$ & RP",
         "3X Stunt Race Series GTA$ & RP",
         "3X Community Series GTA$ & RP",
-        "2X All Contact Missions (4X for GTA+ Members, through December 2), including Madrazo's Dispatch Services, Gerald's Last Play, Premium Deluxe Repo Work & Lowriders GTA$ & RP",
-        "2X Sumo (Remix) [Featured Series] GTA$ & RP"
-      ]
-    },
-    {
-      "id": "challenge",
-      "title": "Défi hebdomadaire",
-      "items": [
-        "Complete three Gerald's Last Play missions"
-      ]
-    },
-    {
-      "id": "targets",
-      "title": "Cibles principales des braquages",
-      "items": [
-        "\"Juiced\" Kortz Center Heist",
-        "\"The Downfall of Rome\" Kortz Center Heist",
-        "\"Consumato\" Kortz Center Heist"
+        "2X All Contact Missions (4X for GTA+ Members, through December 2), including Madrazo's Dispatch Services, Gerald's Last Play, Premium Deluxe Repo Work & Lowriders GTA$ & RP"
       ]
     },
     {
       "id": "salvage",
       "title": "Casse : véhicules à voler",
       "items": [
-        "Kanjo SJ Coupes · Dinka $1,370,000 The Podium Robbery",
-        "Dominator ASP Muscle · Vapid Imani −30% $1,775,000 $1,242,500 The Duggan Robbery",
-        "Stinger TT Sports · Grotti HSW Imani $2,380,000 The Gangbanger Robbery"
+        "Previon Coupes · Karin $1,490,000 The Cargo Ship Robbery",
+        "Gauntlet Hellfire Muscle · Bravado $745,000 The Duggan Robbery",
+        "Vagner Super · Dewbauchee $1,535,000 The McTony Robbery"
       ]
     },
     {
       "id": "discounts",
       "title": "Promotions",
       "items": [
-        "811 Super · Pfister Imani −30% $1,135,000 $794,500",
-        "Autarch Super · Overflod −30% $1,955,000 $1,368,500",
-        "Cargobob Helicopters · Western Company Imani −30% $1,790,000 $1,253,000",
-        "Dominator ASP Muscle · Vapid Imani −30% $1,775,000 $1,242,500",
-        "Dominator GTX Muscle · Vapid −30% $725,000 $507,500",
-        "Lectro Motorcycles · Principe −30% $997,500 $698,250",
-        "RC Bandito Off-Road −30% $1,590,000 $1,113,000",
-        "Shamal Planes · Buckingham −30% $1,150,000 $805,000",
-        "Uranus LozSpeed Sports Classics · Vapid Imani −30% $1,140,000 $798,000",
-        "Viseris Sports Classics · Lampadati Imani −30% $875,000 $612,500",
-        "Windsor Drop Coupes · Enus −30% $900,000 $630,000"
+        "Baller ST SUVs · Gallivanter −30% $890,000 $623,000",
+        "Chavos V6 Sedans · Dinka Imani −30% $1,420,000 $994,000",
+        "Cheetah Classic Sports Classics · Grotti −30% $865,000 $605,500",
+        "Ellie Muscle · Vapid −30% $565,000 $395,500",
+        "Neo Sports · Vysser Imani −30% $1,875,000 $1,312,500",
+        "Ratel Off-Road · Vapid Imani −30% $1,873,000 $1,311,100",
+        "Squaddie SUVs · Mammoth Removed Vehicle −30% $1,130,000 $791,000",
+        "Sultan Classic Sports · Karin −30% $1,718,000 $1,202,600"
       ]
     },
     {
       "id": "podium",
       "title": "Voiture du podium (casino)",
       "items": [
-        "Baller ST-D SUVs · Gallivanter Imani $1,715,000"
+        "Caracara Off-Road · Vapid $1,775,000"
       ]
     },
     {
       "id": "prize",
       "title": "Prize Ride (LS Car Meet)",
       "items": [
-        "SM722 Sports · Benefactor $1,669,000 Place 1st in an LS Car Meet Series race for three days in a row:"
-      ]
-    },
-    {
-      "id": "gunvan",
-      "title": "Gun Van",
-      "items": [
-        "Double Barrel Shotgun −10% $15,450 $13,905 −20% · $12,205",
-        "Flare Gun −10% $3,750 $3,375 −20% · $2,962",
-        "Knife FREE",
-        "Pipe Bomb −10% $500 $450 −20% · $395",
-        "Pool Cue −10% $6,250 $5,625 −20% · $4,937",
-        "Railgun −10% $730,000 $657,000 −20% · $576,700",
-        "Sticky Bombs −10% $600 $540 −20% · $474",
-        "Tactical SMG −10% $325,000 $292,500 −20% · $256,750",
-        "Tear Gas −10% $150 $135 −20% · $118",
-        "Baseball Bat",
-        "Armor"
+        "Comet S2 Cabrio Sports · Pfister Imani $1,797,000 Place Top 1 in the LS Car Meet Series for four days in a row:"
       ]
     },
     {
@@ -107,5 +70,5 @@
       ]
     }
   ],
-  "fetchedAt": "2026-11-23T10:47:40.332Z"
+  "fetchedAt": "2026-11-26T20:21:39.439Z"
 }
