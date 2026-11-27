@@ -10,19 +10,19 @@
       "id": "bonus",
       "title": "Bonus GTA$ et RP",
       "items": [
-        "4X Freemode Challenges GTA$ & RP",
-        "3X Stunt Race Series GTA$ & RP",
+        "2X All Contact Missions (4X for GTA+ Members, through December 2), including Madrazo's Dispatch Services, Gerald's Last Play, Premium Deluxe Repo Work & Lowriders GTA$ & RP",
         "3X Community Series GTA$ & RP",
-        "2X All Contact Missions (4X for GTA+ Members, through December 2), including Madrazo's Dispatch Services, Gerald's Last Play, Premium Deluxe Repo Work & Lowriders GTA$ & RP"
+        "4X Freemode Challenges GTA$ & RP",
+        "3X Stunt Race Series GTA$ & RP"
       ]
     },
     {
       "id": "salvage",
       "title": "Casse : véhicules à voler",
       "items": [
-        "Previon Coupes · Karin $1,490,000 The Cargo Ship Robbery",
+        "Vagner Super · Dewbauchee $1,535,000 The McTony Robbery",
         "Gauntlet Hellfire Muscle · Bravado $745,000 The Duggan Robbery",
-        "Vagner Super · Dewbauchee $1,535,000 The McTony Robbery"
+        "Previon Coupes · Karin $1,490,000 The Cargo Robbery"
       ]
     },
     {
@@ -34,6 +34,7 @@
         "Cheetah Classic Sports Classics · Grotti −30% $865,000 $605,500",
         "Ellie Muscle · Vapid −30% $565,000 $395,500",
         "Neo Sports · Vysser Imani −30% $1,875,000 $1,312,500",
+        "Police Prison Bus Emergency · Vapid −30% $731,500 $512,050",
         "Ratel Off-Road · Vapid Imani −30% $1,873,000 $1,311,100",
         "Squaddie SUVs · Mammoth Removed Vehicle −30% $1,130,000 $791,000",
         "Sultan Classic Sports · Karin −30% $1,718,000 $1,202,600"
@@ -50,7 +51,7 @@
       "id": "prize",
       "title": "Prize Ride (LS Car Meet)",
       "items": [
-        "Comet S2 Cabrio Sports · Pfister Imani $1,797,000 Place Top 1 in the LS Car Meet Series for four days in a row:"
+        "Comet S2 Cabrio Sports · Pfister Imani $1,797,000 Place Top 1 in an LS Car Meet Series race for 4 days in a row(Resets at 8pm EDT)"
       ]
     },
     {
@@ -70,5 +71,5 @@
       ]
     }
   ],
-  "fetchedAt": "2026-11-26T20:21:39.439Z"
+  "fetchedAt": "2026-11-27T00:28:11.655Z"
 }
